@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE log4j:configuration SYSTEM "log4j.dtd" >
+<log4j:configuration xmlns:log4j="http://jakarta.apache.org/log4j/">
+	<appender name="CONSOLE_INFO" class="org.apache.log4j.ConsoleAppender">
+		<param name="Encoding" value="UTF-8" />
+		<param name="Target" value="System.out" />
+		<layout class="org.apache.log4j.PatternLayout">
+			<param name="ConversionPattern" value="%d{yyyy-MM-dd HH:mm:ss} %-5p %c{1} - %m%n" />
+		</layout>
+		<filter class="org.apache.log4j.varia.LevelRangeFilter">
+			<param name="LevelMin" value="INFO" />
+		</filter>
+	</appender>
+	<appender name="FILE_DEBUG" class="org.apache.log4j.DailyRollingFileAppender">
+		<param name="DatePattern" value=".yyyyMMdd_HH.mm.ss" />
+		<param name="Encoding" value="UTF-8" />
+		<param name="File" value="./log/run-dev.log" />
+		<layout class="org.apache.log4j.PatternLayout">
+			<param name="ConversionPattern" value="%d{yyyy-MM-dd HH:mm:ss} %-5p %c{1}:%L - %m%n" />
+		</layout>
+		<filter class="org.apache.log4j.varia.LevelRangeFilter">
+			<param name="LevelMin" value="DEBUG" />
+		</filter>
+	</appender>
+	<logger name="org.ihtsdo.sct.drugmatch">
+		<appender-ref ref="FILE_DEBUG"/>
+	</logger>
+	<root>
+		<appender-ref ref="CONSOLE_INFO" />
+	</root>
+</log4j:configuration>

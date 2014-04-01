@@ -1,0 +1,4 @@
+"DrugID";"Trade name";"Dose form";"SubstanceNameEN_1";"SubstanceNameDK_1";"Strength_1";"Unit_1";"SubstanceNameEN_2";"SubstanceNameDK_2";"Strength_2";"Unit_2";"SubstanceNameEN_N";"SubstanceNameDK_N";"Strength_N";"Unit_N"
+"DrugMatch test unmatched";"Unmatched trade name";"Unmatched dose form";"Unmatched substance";"Ikke eksisterende substans";"-1";"Unmatched unit";;;;
+"DrugMatch test simple match";"Azathioprine 10mg tablet";"Oral tablet";"Azathioprine";"Azathioprin";"10";"mg"
+"DrugMatch test combined match";"Acetaminophen + alcohol + codeine phosphate 120mg/7%vv/12mg elixir";"Oral dosage form";"Acetaminophen";"Paracetamol";"120";"mg";"Alcohol";"Alkohol ";"7";"%vv";"Codeine phosphate";"codeinphosphat";"12";"mg"
