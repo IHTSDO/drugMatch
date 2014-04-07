@@ -26,7 +26,7 @@ import au.com.bytecode.opencsv.CSVReader;
  */
 public class CSVParser implements Parser {
 
-	private static Logger log = LoggerFactory.getLogger(CSVParser.class);
+	private static final Logger log = LoggerFactory.getLogger(CSVParser.class);
 
 	private final DrugMatchProperties drugMatchProperties = new DrugMatchProperties();
 

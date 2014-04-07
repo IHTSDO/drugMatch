@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
+import org.ihtsdo.sct.drugmatch.check.extension.CheckValidationHelper;
 import org.ihtsdo.sct.drugmatch.exception.DrugMatchConfigurationException;
 import org.ihtsdo.sct.drugmatch.model.Component;
 import org.ihtsdo.sct.drugmatch.model.Pharmaceutical;
@@ -31,9 +32,11 @@ import au.com.bytecode.opencsv.CSVWriter;
  */
 public class Check {
 
-	private static Logger log = LoggerFactory.getLogger(Check.class);
+	private static final Logger log = LoggerFactory.getLogger(Check.class);
 
-	private final DrugMatchProperties drugMatchProperties = new DrugMatchProperties();
+	private final CheckValidation checkValidation;
+
+	private final DrugMatchProperties drugMatchProperties;
 
 	/**
 	 * {@link Substance} to names to matches (this construct enables direct link between English and national term)
@@ -43,7 +46,7 @@ public class Check {
 	/**
 	 * unit name to matches
 	 */
-	private final SortedMap<String, List<ConceptSearchResultDescriptor>> doseForms = new TreeMap<>(),
+	private final SortedMap<String, Map<CheckLocale, List<ConceptSearchResultDescriptor>>> doseForms = new TreeMap<>(),
 			units = new TreeMap<>();
 
 	private final List<Pharmaceutical> pharmaceuticals;
@@ -52,18 +55,21 @@ public class Check {
 
 	private final VerificationService service;
 
-	public Check(List<Pharmaceutical> pharmaceuticals,
+	public Check(DrugMatchProperties drugMatchProperties,
+			List<Pharmaceutical> pharmaceuticals,
 			String isoNow) throws KeyManagementException, NoSuchAlgorithmException, DrugMatchConfigurationException, IOException {
+		this.drugMatchProperties = drugMatchProperties;
+		this.checkValidation = CheckValidationHelper.getCheckValidation(this.drugMatchProperties.getNationalNamespaceId());
 		// extract pharmaceutical components in preparation for execution
 		Map<String, List<ConceptSearchResultDescriptor>> substanceNameToMatches;
 		for (Pharmaceutical pharmaceutical : pharmaceuticals) {
-			this.doseForms.put(pharmaceutical.doseForm, null);
+			this.doseForms.put(pharmaceutical.doseForm, new HashMap<CheckLocale, List<ConceptSearchResultDescriptor>>());
 			for (Component component : pharmaceutical.components) {
 				substanceNameToMatches = new HashMap<>();
 				substanceNameToMatches.put(component.substance.nameEnglish, null);
 				substanceNameToMatches.put(component.substance.nameNational, null);
 				this.substances.put(component.substance, substanceNameToMatches);
-				this.units.put(component.unit, null);
+				this.units.put(component.unit, new HashMap<CheckLocale, List<ConceptSearchResultDescriptor>>());
 			}
 		}
 		this.pharmaceuticals = pharmaceuticals;
@@ -87,8 +93,16 @@ public class Check {
 	 */
 	public void checkDoseForms() throws IOException, DrugMatchConfigurationException {
 		log.info("Starting Dose form \"Check\" ({} Dose forms)", this.doseForms.size());
-		for (String doseForm : this.doseForms.keySet()) {
-			this.doseForms.put(doseForm, this.service.getDoseFormExactEnglishPreferredTermMatch(doseForm));
+		List<ConceptSearchResultDescriptor> matches;
+		for (Map.Entry<String, Map<CheckLocale, List<ConceptSearchResultDescriptor>>> entry : this.doseForms.entrySet()) {
+			// "check" national
+			matches = this.service.getDoseFormExactNationalPreferredTermMatch(entry.getKey());
+			entry.getValue().put(CheckLocale.NATIONAL, matches);
+			if (matches.isEmpty()) {
+				// "check" English, when unmatched national
+				entry.getValue().put(CheckLocale.ENGLISH,
+						this.service.getDoseFormExactEnglishPreferredTermMatch(entry.getKey()));
+			}
 		}
 		log.info("Completed Dose form \"Check\"");
 		log.info("Starting Dose form \"Check\" report");
@@ -106,11 +120,11 @@ public class Check {
 		log.info("Starting Substance \"Check\" ({} Substances)", this.substances.size());
 		List<ConceptSearchResultDescriptor> matches;
 		for (Map.Entry<Substance, Map<String, List<ConceptSearchResultDescriptor>>> entry : this.substances.entrySet()) {
-			// "check" substances national
+			// "check" national
 			matches = this.service.getSubstanceExactNationalPreferredTermMatch(entry.getKey().nameNational);
 			entry.getValue().put(entry.getKey().nameNational, matches);
 			if (matches.isEmpty()) {
-				// "check" substances English, that didn't match the national
+				// "check" English, when unmatched national
 				entry.getValue().put(entry.getKey().nameEnglish,
 						this.service.getSubstanceExactEnglishPreferredTermMatch(entry.getKey().nameEnglish));
 			}
@@ -135,8 +149,16 @@ public class Check {
 	 */
 	public void checkUnits() throws IOException, DrugMatchConfigurationException {
 		log.info("Starting Unit \"Check\" ({} Units)", this.units.size());
-		for (String unit : this.units.keySet()) {
-			this.units.put(unit, this.service.getUnitExactEnglishPreferredTermMatch(unit));
+		List<ConceptSearchResultDescriptor> matches;
+		for (Map.Entry<String, Map<CheckLocale, List<ConceptSearchResultDescriptor>>> entry : this.units.entrySet()) {
+			// "check" national
+			matches = this.service.getUnitExactNationalPreferredTermMatch(entry.getKey());
+			entry.getValue().put(CheckLocale.NATIONAL, matches);
+			if (matches.isEmpty()) {
+				// "check" English, when unmatched national
+				entry.getValue().put(CheckLocale.ENGLISH,
+						this.service.getUnitExactEnglishPreferredTermMatch(entry.getKey()));
+			}
 		}
 		log.info("Completed Unit \"Check\"");
 		log.info("Starting Unit \"Check\" report");
@@ -173,7 +195,8 @@ public class Check {
 			writer.writeNext(columns);
 			// content
 			String componentName;
-			List<ConceptSearchResultDescriptor> descriptors;
+			List<ConceptSearchResultDescriptor> englishDescriptors,
+				nationalDescriptors;
 			boolean isComponent;
 			List<String[]> pharmaceuticalLines;
 			Map<String, List<ConceptSearchResultDescriptor>> substance2Descriptors;
@@ -193,42 +216,50 @@ public class Check {
 						case SUBSTANCE_ENGLISH:
 							componentName = component.substance.nameEnglish;
 							substance2Descriptors = this.substances.get(component.substance);
-							descriptors = (substance2Descriptors == null) ? null : substance2Descriptors.get(componentName);
+							englishDescriptors = (substance2Descriptors == null) ? null : substance2Descriptors.get(componentName);
+							nationalDescriptors = null;
 							break;
 						case SUBSTANCE_NATIONAL:
 							componentName = component.substance.nameNational;
 							substance2Descriptors = this.substances.get(component.substance);
-							descriptors = (substance2Descriptors == null) ? null : substance2Descriptors.get(componentName);
+							englishDescriptors = null;
+							nationalDescriptors = (substance2Descriptors == null) ? null : substance2Descriptors.get(componentName);
 							break;
 						case UNIT:
 							componentName = component.unit;
-							descriptors = this.units.get(componentName);
+							englishDescriptors = this.units.get(componentName).get(CheckLocale.ENGLISH);
+							nationalDescriptors = this.units.get(componentName).get(CheckLocale.NATIONAL);
 							break;
 						default:
 							componentName = null;
-							descriptors = null;
+							englishDescriptors = null;
+							nationalDescriptors = null;
 							log.debug("Unable to generate check report for component {} with Drug ID: {}", component, pharmaceutical.drugId);
 							break;
 						}
 						pharmaceuticalLines.add(getColumns(pharmaceutical.drugId,
 								componentName,
-								descriptors));
+								nationalDescriptors,
+								getMatchDescriptors(englishDescriptors, nationalDescriptors)));
 					}
 				} else {
 					switch (checkComponent) {
 					case DOSE_FORM:
 						componentName = pharmaceutical.doseForm;
-						descriptors = this.doseForms.get(componentName);
+						englishDescriptors = this.doseForms.get(componentName).get(CheckLocale.ENGLISH);
+						nationalDescriptors = this.doseForms.get(componentName).get(CheckLocale.NATIONAL);
 						break;
 					default:
 						componentName = null;
-						descriptors = null;
+						englishDescriptors = null;
+						nationalDescriptors = null;
 						log.debug("Unable to generate check report for {}", pharmaceutical);
 						break;
 					}
 					pharmaceuticalLines = Collections.singletonList(getColumns(pharmaceutical.drugId,
 							componentName,
-							descriptors));
+							nationalDescriptors,
+							getMatchDescriptors(englishDescriptors, nationalDescriptors)));
 				}
 				writer.writeAll(pharmaceuticalLines);
 			}
@@ -237,32 +268,64 @@ public class Check {
 		}
 	}
 
-	private static String[] getColumns(String drugId,
+	/**
+	 * @param englishDescriptors
+	 * @param nationalDescriptors
+	 * @return nationalDescriptors if not empty, otherwise englishDescriptors
+	 */
+	public static List<ConceptSearchResultDescriptor> getMatchDescriptors(List<ConceptSearchResultDescriptor> englishDescriptors,
+			List<ConceptSearchResultDescriptor> nationalDescriptors) {
+		if (nationalDescriptors != null
+				&& nationalDescriptors.size() > 0) {
+			return nationalDescriptors;
+		}
+		return englishDescriptors;
+	}
+
+	public String[] getColumns(String drugId,
 			String componentName,
-			List<ConceptSearchResultDescriptor> descriptors) {
+			List<ConceptSearchResultDescriptor> nationalDescriptors,
+			List<ConceptSearchResultDescriptor> matchDescriptors) {
 		String[] columns = new String[6];
 		columns[0] = drugId;
 		columns[1] = componentName;
-		if (descriptors == null) {
-			columns[5] = "UNCHECKED";
-		} else if (descriptors.isEmpty()) {
-			columns[5] = "ZERO_MATCH";
-		} else {
-			if (descriptors.size() == 1) {
-				ConceptSearchResultDescriptor descriptor = descriptors.iterator().next();
+		if (matchDescriptors != null
+				&& matchDescriptors.size() == 1) {
+				ConceptSearchResultDescriptor descriptor = matchDescriptors.iterator().next();
 				columns[2] = descriptor.conceptCode;
 				columns[3] = descriptor.healthtermDescriptionId.toString();
 				columns[4] = descriptor.descriptionTerm;
-				if (componentName.equals(descriptor.descriptionTerm)) {
-					columns[5] = "EXACT_MATCH";
-				} else {
-					columns[5] = "CASE_INSENSITIVE_MATCH";
-				}
-			} else {
-				columns[4] = "AMBIGUOUS_MATCH";
-			}
 		}
+		columns[5] = this.checkValidation.getCheckRuleViolationMessage(getRule(componentName,
+				nationalDescriptors,
+				matchDescriptors));
 		return columns;
+	}
+
+	/**
+	 * @param descriptors
+	 * @return {@link CheckRule} matched
+	 */
+	public CheckRule getRule(String componentName,
+			List<ConceptSearchResultDescriptor> nationalDescriptors,
+			List<ConceptSearchResultDescriptor> matchDescriptors) {
+		// generic checks
+		if (nationalDescriptors != null
+				&& nationalDescriptors.isEmpty()) {
+			return CheckRule.TRANSLATION_MISSING;
+		} // else
+		if (matchDescriptors == null) {
+			return CheckRule.UNCHECKED;
+		} // else
+		if (matchDescriptors.isEmpty()) {
+			return CheckRule.ZERO_MATCH;
+		} // else
+		if (matchDescriptors.size() == 1) {
+			// custom or generic check
+			return this.checkValidation.getRule(componentName,
+					matchDescriptors);
+		} // else
+		return CheckRule.AMBIGUOUS_MATCH;
 	}
 
 	private enum CheckComponent {
@@ -270,5 +333,10 @@ public class Check {
 		SUBSTANCE_ENGLISH,
 		SUBSTANCE_NATIONAL,
 		UNIT;
+	}
+
+	private enum CheckLocale {
+		ENGLISH,
+		NATIONAL;
 	}
 }

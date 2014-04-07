@@ -14,9 +14,13 @@ public interface VerificationService {
 
 	List<ConceptSearchResultDescriptor> getDoseFormExactEnglishPreferredTermMatch(String query) throws IOException, DrugMatchConfigurationException;
 
+	List<ConceptSearchResultDescriptor> getDoseFormExactNationalPreferredTermMatch(String query) throws IOException, DrugMatchConfigurationException;
+
 	List<ConceptSearchResultDescriptor> getSubstanceExactEnglishPreferredTermMatch(String query) throws IOException, DrugMatchConfigurationException;
 
 	List<ConceptSearchResultDescriptor> getSubstanceExactNationalPreferredTermMatch(String query) throws IOException, DrugMatchConfigurationException;
 
 	List<ConceptSearchResultDescriptor> getUnitExactEnglishPreferredTermMatch(String query) throws IOException, DrugMatchConfigurationException;
+
+	List<ConceptSearchResultDescriptor> getUnitExactNationalPreferredTermMatch(String query) throws IOException, DrugMatchConfigurationException;
 }

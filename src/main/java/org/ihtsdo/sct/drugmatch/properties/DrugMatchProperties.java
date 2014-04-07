@@ -18,7 +18,7 @@ import org.slf4j.LoggerFactory;
  */
 public class DrugMatchProperties {
 
-	private static Logger log = LoggerFactory.getLogger(DrugMatchProperties.class);
+	private static final Logger log = LoggerFactory.getLogger(DrugMatchProperties.class);
 
 	public static final String 
 			CONSTRAINT_ID_DOSE_FORM = "constraint_id.dose_form",

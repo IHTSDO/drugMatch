@@ -53,7 +53,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  */
 public class VerificationServiceImpl implements VerificationService {
 
-	private static Logger log = LoggerFactory.getLogger(VerificationServiceImpl.class);
+	private static final Logger log = LoggerFactory.getLogger(VerificationServiceImpl.class);
 
 	private final CredentialsProvider credentialsProvider;
 
@@ -168,13 +168,35 @@ public class VerificationServiceImpl implements VerificationService {
 	}
 
 	public List<ConceptSearchResultDescriptor> getDoseFormExactEnglishPreferredTermMatch(String query) throws IOException, DrugMatchConfigurationException {
+		return getDoseFormExactPreferredTermMatch(
+				Collections.<String>emptySet(), // unable to filter on namespace as the SNOMED CT international release now contains 1+ namespace.
+				query,
+				this.englishLocaleCodes);
+	}
+
+	public List<ConceptSearchResultDescriptor> getDoseFormExactNationalPreferredTermMatch(String query) throws IOException, DrugMatchConfigurationException {
+		String nationalNamespaceId = this.drugMatchProperties.getNationalNamespaceId();
+		if (nationalNamespaceId == null) {
+			throw new DrugMatchConfigurationException("Unable to proceed, cause: '" + DrugMatchProperties.NATIONAL_NAMESPACE_ID + "' isn't set!");
+		} // else
+		return getDoseFormExactPreferredTermMatch(
+				Collections.singleton(nationalNamespaceId),
+				query,
+				Collections.<String>emptySet());
+	}
+
+	public List<ConceptSearchResultDescriptor> getDoseFormExactPreferredTermMatch(
+			Set<String> namespaceIds,
+			String query,
+			Set<String> localeCodes) throws IOException, DrugMatchConfigurationException {
 		Long constraintId = this.drugMatchProperties.getConstraintIdDoseForm();
 		if (constraintId == null) {
 			throw new DrugMatchConfigurationException("Unable to proceed, cause: '" + DrugMatchProperties.CONSTRAINT_ID_DOSE_FORM + "' isn't set!");
 		} // else
-		return getExactPreferredTermMatch(Collections.<String>emptySet(), // unable to filter on namespace as the SNOMED CT international release now contains 1+ namespace.
+		return getExactPreferredTermMatch(
+				namespaceIds,
 				Collections.singleton(constraintId),
-				this.englishLocaleCodes,
+				localeCodes,
 				query);
 	}
 
@@ -289,13 +311,35 @@ public class VerificationServiceImpl implements VerificationService {
 	}
 
 	public List<ConceptSearchResultDescriptor> getUnitExactEnglishPreferredTermMatch(String query) throws IOException, DrugMatchConfigurationException {
+		return getUnitExactPreferredTermMatch(
+				Collections.<String>emptySet(), // unable to filter on namespace as the SNOMED CT international release now contains 1+ namespace.
+				query,
+				this.englishLocaleCodes);
+	}
+
+	public List<ConceptSearchResultDescriptor> getUnitExactNationalPreferredTermMatch(String query) throws IOException, DrugMatchConfigurationException {
+		String nationalNamespaceId = this.drugMatchProperties.getNationalNamespaceId();
+		if (nationalNamespaceId == null) {
+			throw new DrugMatchConfigurationException("Unable to proceed, cause: '" + DrugMatchProperties.NATIONAL_NAMESPACE_ID + "' isn't set!");
+		} // else
+		return getUnitExactPreferredTermMatch(
+				Collections.singleton(nationalNamespaceId),
+				query,
+				Collections.<String>emptySet());
+	}
+
+	public List<ConceptSearchResultDescriptor> getUnitExactPreferredTermMatch(
+			Set<String> namespaceIds,
+			String query,
+			Set<String> localeCodes) throws IOException, DrugMatchConfigurationException {
 		Long constraintId = this.drugMatchProperties.getConstraintIdUnit();
 		if (constraintId == null) {
 			throw new DrugMatchConfigurationException("Unable to proceed, cause: '" + DrugMatchProperties.CONSTRAINT_ID_UNIT + "' isn't set!");
 		} // else
-		return getExactPreferredTermMatch(Collections.<String>emptySet(), // unable to filter on namespace as the SNOMED CT international release now contains 1+ namespace.
+		return getExactPreferredTermMatch(
+				namespaceIds,
 				Collections.singleton(constraintId),
-				this.englishLocaleCodes,
+				localeCodes,
 				query);
 	}
 }

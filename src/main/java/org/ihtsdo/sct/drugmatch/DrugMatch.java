@@ -17,10 +17,11 @@ import org.slf4j.LoggerFactory;
 
 /**
  * @author dev-team@carecom.dk
+ * 
  */
 public class DrugMatch {
 
-	private static Logger log = LoggerFactory.getLogger(DrugMatch.class);
+	private static final Logger log = LoggerFactory.getLogger(DrugMatch.class);
 
 	private final DrugMatchProperties drugMatchProperties = new DrugMatchProperties();
 
@@ -43,11 +44,12 @@ public class DrugMatch {
 			System.exit(ReturnCode.INPUT_PARSE_ERROR.getValue());
 		} // else
 		// check
-		new Check(parsingResult.pharmaceuticals,
+		new Check(this.drugMatchProperties,
+				parsingResult.pharmaceuticals,
 				this.isoNow).execute();
-//		// match
-//		
-//		// create
+		// match
+		
+		// create
 		
 		log.info("Completed DrugMatch flow");
 	}
