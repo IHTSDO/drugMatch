@@ -6,7 +6,7 @@
 	<groupId>org.ihtsdo.sct.drugmatch</groupId>
 	<artifactId>ihtsdo-sct-drugmatch</artifactId>
 	<packaging>jar</packaging>
-	<version>1.0-MILESTONE_1-ALPHA-RELEASE_2</version>
+	<version>1.0-MILESTONE_2-ALPHA-RELEASE_1</version>
 	<name>${project.artifactId}</name>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -60,6 +60,11 @@
 		</plugins>
 	</build>
 	<dependencies>
+		<dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-lang3</artifactId>
+			<version>3.3.2</version>
+		</dependency>
 		<dependency>
 			<groupId>commons-validator</groupId>
 			<artifactId>commons-validator</artifactId>

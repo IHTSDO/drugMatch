@@ -25,6 +25,7 @@ import org.apache.commons.validator.routines.UrlValidator;
 import org.apache.http.HttpStatus;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
+import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.CredentialsProvider;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -37,13 +38,16 @@ import org.ihtsdo.sct.drugmatch.enumeration.DescriptionType;
 import org.ihtsdo.sct.drugmatch.exception.DrugMatchConfigurationException;
 import org.ihtsdo.sct.drugmatch.properties.DrugMatchProperties;
 import org.ihtsdo.sct.drugmatch.verification.service.VerificationService;
+import org.ihtsdo.sct.drugmatch.verification.service.healthterm.model.ConceptDescriptor;
 import org.ihtsdo.sct.drugmatch.verification.service.healthterm.model.ConceptSearchResultDescriptor;
 import org.ihtsdo.sct.drugmatch.verification.service.healthterm.model.LogEntry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -62,6 +66,8 @@ public class VerificationServiceImpl implements VerificationService {
 	private final DrugMatchProperties drugMatchProperties = new DrugMatchProperties();
 
 	private final Set<String> englishLocaleCodes = new TreeSet<>(Arrays.asList(new String[] { "en", "en-GB", "en-US" }));
+
+	private final TypeReference<List<ConceptDescriptor>> conceptDescriptorTypeReference = new TypeReference<List<ConceptDescriptor>>(){};
 
 	private final TypeReference<List<ConceptSearchResultDescriptor>> conceptSearchResultDescriptorTypeReference = new TypeReference<List<ConceptSearchResultDescriptor>>(){};
 
@@ -167,6 +173,66 @@ public class VerificationServiceImpl implements VerificationService {
 		return httpget;
 	}
 
+	public List<ConceptSearchResultDescriptor> getAttributeExactMatch(Set<Long> attributeIds,
+			Set<Long> valueIds) throws IOException, DrugMatchConfigurationException {
+		// construct path
+		StringBuilder path = new StringBuilder("/webservice/restricted/v1.0/search/concept/attributeRelationExact?");
+		// attribute (Relationship type ID)
+		for (Long attributeId : attributeIds) {
+			path.append("&attributeId=")
+				.append(attributeId);
+		}
+		// value (conceptid2|target)
+		for (Long valueId : valueIds) {
+			path.append("&valueId=")
+				.append(valueId);
+		}
+		// search
+		return getConceptSearchResult(path.toString());
+	}
+
+	public List<ConceptDescriptor> getConceptsByIds(Set<Long> conceptIds) throws IOException {
+		try (CloseableHttpClient httpclient = getHttpClient();) {
+			// construct path
+			StringBuilder path = new StringBuilder("/webservice/restricted/v1.0/lookup/concept/byId?");
+			// attribute (Relationship type ID)
+			for (Long conceptId : conceptIds) {
+				path.append("&conceptId=")
+					.append(conceptId);
+			}
+			HttpGet httpget = getHttpGetJSON(path.toString());
+			try (CloseableHttpResponse response = httpclient.execute(httpget);) {
+				log.debug("Executed request: {} status: {}", httpget.getRequestLine(), response.getStatusLine());
+				if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
+					ObjectMapper mapper = new ObjectMapper();
+					JsonNode results = mapper.readTree(response.getEntity().getContent()).get("conceptDetailDescriptor");
+					List<ConceptDescriptor> result = mapper.readValue(results.traverse(), this.conceptDescriptorTypeReference);
+					EntityUtils.consume(response.getEntity());
+					return result;
+				} // else
+				StringBuilder sb = new StringBuilder();
+				try {
+					BufferedReader br = new BufferedReader(new InputStreamReader(response.getEntity().getContent()));
+					String line;
+					while ((line = br.readLine()) != null) {
+						sb.append(line);
+					}
+					ObjectMapper mapper = new ObjectMapper();
+					JsonNode logEntries = mapper.readTree(sb.toString()).get("log");
+					List<LogEntry> result = mapper.readValue(logEntries.traverse(), this.logEntryTypeReference);
+					EntityUtils.consume(response.getEntity());
+					if (result.isEmpty()) {
+						throw new IOException("Unable to retrieve Concept by ID, cause: HTTP status code " + response.getStatusLine().getStatusCode());
+					} // else
+					throw new IOException(result.iterator().next().toString());
+				} catch (JsonParseException e) {
+					throw new IOException("Unable to retrieve Concept by ID, cause: HTTP status code " + response.getStatusLine().getStatusCode() +
+							" response content: " + sb.toString());
+				}
+			}
+		}
+	}
+
 	public List<ConceptSearchResultDescriptor> getDoseFormExactEnglishPreferredTermMatch(String query) throws IOException, DrugMatchConfigurationException {
 		return getDoseFormExactPreferredTermMatch(
 				Collections.<String>emptySet(), // unable to filter on namespace as the SNOMED CT international release now contains 1+ namespace.
@@ -243,8 +309,14 @@ public class VerificationServiceImpl implements VerificationService {
 				.append(URLEncoder.encode(localeCode, CharEncoding.UTF_8));
 		}
 		// search
+		return getConceptSearchResult(path.toString());
+	}
+
+	private List<ConceptSearchResultDescriptor> getConceptSearchResult(
+			String path) throws IOException, JsonProcessingException,
+			JsonParseException, JsonMappingException, ClientProtocolException {
 		try (CloseableHttpClient httpclient = getHttpClient();) {
-			HttpGet httpget = getHttpGetJSON(path.toString());
+			HttpGet httpget = getHttpGetJSON(path);
 			try (CloseableHttpResponse response = httpclient.execute(httpget);) {
 				log.debug("Executed request: {} status: {}", httpget.getRequestLine(), response.getStatusLine());
 				if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {

@@ -6,12 +6,14 @@ import java.security.NoSuchAlgorithmException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-import org.ihtsdo.sct.drugmatch.check.Check;
 import org.ihtsdo.sct.drugmatch.enumeration.ReturnCode;
 import org.ihtsdo.sct.drugmatch.exception.DrugMatchConfigurationException;
+import org.ihtsdo.sct.drugmatch.match.Match;
 import org.ihtsdo.sct.drugmatch.model.ParsingResult;
 import org.ihtsdo.sct.drugmatch.parser.impl.CSVParser;
 import org.ihtsdo.sct.drugmatch.properties.DrugMatchProperties;
+import org.ihtsdo.sct.drugmatch.verification.service.VerificationService;
+import org.ihtsdo.sct.drugmatch.verification.service.healthterm.impl.VerificationServiceImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,12 +45,21 @@ public class DrugMatch {
 					parsingResult.pharmaceuticals.size());
 			System.exit(ReturnCode.INPUT_PARSE_ERROR.getValue());
 		} // else
+		VerificationService verificationService = new VerificationServiceImpl();
 		// check
-		new Check(this.drugMatchProperties,
-				parsingResult.pharmaceuticals,
-				this.isoNow).execute();
+// TODO add support for runtime args limiting execution scope
+//		Check check = new Check(this.drugMatchProperties,
+//				parsingResult.pharmaceuticals,
+//				this.isoNow,
+//				verificationService);
+//		check.execute();
+// TODO strict mode check
 		// match
-		
+		Match match = new Match(this.drugMatchProperties,
+				parsingResult.pharmaceuticals,
+				this.isoNow,
+				verificationService);
+		match.execute();
 		// create
 		
 		log.info("Completed DrugMatch flow");

@@ -2,8 +2,10 @@ package org.ihtsdo.sct.drugmatch.verification.service;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Set;
 
 import org.ihtsdo.sct.drugmatch.exception.DrugMatchConfigurationException;
+import org.ihtsdo.sct.drugmatch.verification.service.healthterm.model.ConceptDescriptor;
 import org.ihtsdo.sct.drugmatch.verification.service.healthterm.model.ConceptSearchResultDescriptor;
 
 /**
@@ -11,6 +13,11 @@ import org.ihtsdo.sct.drugmatch.verification.service.healthterm.model.ConceptSea
  *
  */
 public interface VerificationService {
+
+	List<ConceptSearchResultDescriptor> getAttributeExactMatch(Set<Long> attributeIds,
+			Set<Long> valueIds) throws IOException, DrugMatchConfigurationException;
+
+	List<ConceptDescriptor> getConceptsByIds(Set<Long> conceptIds) throws IOException;
 
 	List<ConceptSearchResultDescriptor> getDoseFormExactEnglishPreferredTermMatch(String query) throws IOException, DrugMatchConfigurationException;
 

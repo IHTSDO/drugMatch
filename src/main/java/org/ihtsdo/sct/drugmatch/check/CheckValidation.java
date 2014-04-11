@@ -1,25 +1,22 @@
 package org.ihtsdo.sct.drugmatch.check;
 
-import java.util.List;
-
-import org.ihtsdo.sct.drugmatch.check.CheckRule;
 import org.ihtsdo.sct.drugmatch.verification.service.healthterm.model.ConceptSearchResultDescriptor;
 
 /**
+ * "Check" validation
+ * 
  * @author dev-team@carecom.dk
  *
  */
 public interface CheckValidation {
 
 	/**
-	 * Precondition; matchDescriptors contains 1 element, and 1 element only!
-	 * 
 	 * @param componentName
-	 * @param matchDescriptors
+	 * @param conceptSearchResultDescriptor
 	 * @return {@link CheckRule}
 	 */
 	CheckRule getRule(String componentName,
-			List<ConceptSearchResultDescriptor> matchDescriptors);
+			ConceptSearchResultDescriptor conceptSearchResultDescriptor);
 
 	/**
 	 * @param checkRule

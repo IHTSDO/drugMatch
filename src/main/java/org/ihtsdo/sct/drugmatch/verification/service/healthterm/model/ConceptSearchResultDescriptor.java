@@ -1,29 +1,22 @@
 package org.ihtsdo.sct.drugmatch.verification.service.healthterm.model;
 
 import java.io.Serializable;
-import java.util.List;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 /**
  * @author dev-team@carecom.dk
  *
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class ConceptSearchResultDescriptor implements Serializable {
 
 	public String conceptCode,
-			conceptFullySpecifiedName,
-			conceptHierarchy,
-			conceptNamespaceId,
-			conceptNamespaceName,
-			
-			descriptionNamespaceId,
-			descriptionNamespaceName,
 			descriptionTerm;
 
 	public Long healthtermConceptId,
 			healthtermDescriptionId,
 			descriptionType;
-
-	public List<KeyValueDescriptor> keyValueDescriptors;
 
 	@Override
 	public boolean equals(Object obj) {
@@ -66,17 +59,10 @@ public class ConceptSearchResultDescriptor implements Serializable {
 	public String toString() {
 		return new StringBuilder(ConceptSearchResultDescriptor.class.getSimpleName())
 			.append(" [conceptCode=").append(this.conceptCode)
-			.append(", conceptFullySpecifiedName=").append(this.conceptFullySpecifiedName)
-			.append(", conceptHierarchy=").append(this.conceptHierarchy)
-			.append(", conceptNamespaceId=").append(this.conceptNamespaceId)
-			.append(", conceptNamespaceName=").append(this.conceptNamespaceName)
-			.append(", descriptionNamespaceId=").append(this.descriptionNamespaceId)
-			.append(", descriptionNamespaceName=").append(this.descriptionNamespaceName)
 			.append(", descriptionTerm=").append(this.descriptionTerm)
 			.append(", healthtermConceptId=").append(this.healthtermConceptId)
 			.append(", healthtermDescriptionId=").append(this.healthtermDescriptionId)
 			.append(", descriptionType=").append(this.descriptionType)
-			.append(", keyValueDescriptors=").append(this.keyValueDescriptors)
 			.append(']')
 			.toString();
 	}

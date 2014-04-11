@@ -2,7 +2,6 @@ package org.ihtsdo.sct.drugmatch.check.extension.danish;
 
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import org.ihtsdo.sct.drugmatch.check.CheckRule;
@@ -45,8 +44,8 @@ public class CheckValidationImpl implements CheckValidation {
 	}
 
 	public CheckRule getRule(String componentName,
-			List<ConceptSearchResultDescriptor> matchDescriptors) {
-		String term = matchDescriptors.iterator().next().descriptionTerm;
+			ConceptSearchResultDescriptor conceptSearchResultDescriptor) {
+		String term = conceptSearchResultDescriptor.descriptionTerm;
 		if (term.toLowerCase().equals(term)) {
 			return CheckRule.EXACT_MATCH;
 		} // else

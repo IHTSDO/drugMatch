@@ -9,7 +9,7 @@ import java.io.Serializable;
 public class Component implements Serializable {
 
 	public final Substance substance;
-	
+
 	public final String strength,
 		unit;
 
@@ -27,6 +27,24 @@ public class Component implements Serializable {
 				substanceNameNational);
 		this.strength = strength;
 		this.unit = unit;
+	}
+
+	public String getEnglish() {
+		return new StringBuilder(this.substance.nameEnglish)
+			.append(" ")
+			.append(this.strength)
+			.append(" ")
+			.append(this.unit)
+			.toString();
+	}
+
+	public String getNational() {
+		return new StringBuilder(this.substance.nameNational)
+			.append(" ")
+			.append(this.strength)
+			.append(" ")
+			.append(this.unit)
+			.toString();
 	}
 
 	@Override

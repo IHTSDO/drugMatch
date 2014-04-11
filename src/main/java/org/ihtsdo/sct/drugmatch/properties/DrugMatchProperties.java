@@ -21,6 +21,9 @@ public class DrugMatchProperties {
 	private static final Logger log = LoggerFactory.getLogger(DrugMatchProperties.class);
 
 	public static final String 
+			ATTRIBUTE_ID_HAS_ACTIVE_INGREDIENT = "attribute_id.has_active_ingredient",
+			ATTRIBUTE_ID_HAS_DOSE_FORM = "attribute_id.has_dose_form",
+			
 			CONSTRAINT_ID_DOSE_FORM = "constraint_id.dose_form",
 			CONSTRAINT_ID_SUBSTANCE = "constraint_id.substance",
 			CONSTRAINT_ID_UNIT = "constraint_id.unit",
@@ -97,6 +100,30 @@ public class DrugMatchProperties {
 			return null;
 		} // else
 		return propertyValue;
+	}
+
+	public Long getAttributeIdHasActiveIngredient() {
+		String id = getStringProperty(ATTRIBUTE_ID_HAS_ACTIVE_INGREDIENT);
+		try {
+			if (id != null) {
+				return Long.valueOf(id);
+			}
+		} catch (NumberFormatException e) {
+			log.debug("Unable to parse value: {} for: {}", id, ATTRIBUTE_ID_HAS_ACTIVE_INGREDIENT);
+		}
+		return null;
+	}
+
+	public Long getAttributeIdHasDoseForm() {
+		String id = getStringProperty(ATTRIBUTE_ID_HAS_DOSE_FORM);
+		try {
+			if (id != null) {
+				return Long.valueOf(id);
+			}
+		} catch (NumberFormatException e) {
+			log.debug("Unable to parse value: {} for: {}", id, ATTRIBUTE_ID_HAS_DOSE_FORM);
+		}
+		return null;
 	}
 
 	public Long getConstraintIdDoseForm() {

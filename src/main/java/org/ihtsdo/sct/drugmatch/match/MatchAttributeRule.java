@@ -1,0 +1,28 @@
+package org.ihtsdo.sct.drugmatch.match;
+
+/**
+ * @author dev-team@carecom.dk
+ * 
+ */
+public enum MatchAttributeRule {
+
+	AMBIGUOUS_MATCH,
+
+	AMBIGUOUS_MATCH_EXCLUDING_DOSE_FORM_AND_UNIT,
+
+	AMBIGUOUS_MATCH_EXCLUDING_UNIT,
+
+	EXACT_MATCH,
+
+	EXACT_MATCH_EXCLUDING_DOSE_FORM_AND_UNIT,
+
+	EXACT_MATCH_EXCLUDING_UNIT,
+
+	MISSING_DOSE_FORM,
+
+	MISSING_SUBSTANCE,
+
+	MISSING_UNIT,
+
+	ZERO_MATCH;
+}

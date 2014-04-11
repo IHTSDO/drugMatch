@@ -1,7 +1,5 @@
 package org.ihtsdo.sct.drugmatch.check;
 
-import java.util.List;
-
 import org.ihtsdo.sct.drugmatch.verification.service.healthterm.model.ConceptSearchResultDescriptor;
 
 /**
@@ -13,8 +11,8 @@ import org.ihtsdo.sct.drugmatch.verification.service.healthterm.model.ConceptSea
 public class CheckValidationImpl implements CheckValidation {
 
 	public CheckRule getRule(String componentName,
-			List<ConceptSearchResultDescriptor> matchDescriptors) {
-		if (componentName.equals(matchDescriptors.iterator().next().descriptionTerm)) {
+			ConceptSearchResultDescriptor conceptSearchResultDescriptor) {
+		if (componentName.equals(conceptSearchResultDescriptor.descriptionTerm)) {
 			return CheckRule.EXACT_MATCH;
 		} // else
 		return CheckRule.CASE_INSENSITIVE_MATCH;
