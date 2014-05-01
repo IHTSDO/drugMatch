@@ -1,10 +1,8 @@
 package org.ihtsdo.sct.drugmatch.enumeration;
 
 /**
- * SNOMED CT Description types
- * 
+ * SNOMED CT Description types.
  * @author dev-team@carecom.dk
- *
  */
 public enum DescriptionType {
 
@@ -19,11 +17,10 @@ public enum DescriptionType {
 	private final int id;
 
 	/**
-	 * default constructor
-	 * 
+	 * Default constructor.
 	 * @param id ID
 	 */
-	private DescriptionType(int id) {
+	private DescriptionType(final int id) {
 		this.id = id;
 	}
 

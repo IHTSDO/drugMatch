@@ -2,7 +2,6 @@ package org.ihtsdo.sct.drugmatch.match;
 
 /**
  * @author dev-team@carecom.dk
- * 
  */
 public enum MatchTermRule {
 
@@ -45,14 +44,14 @@ public enum MatchTermRule {
 	ZERO_ATTRIBUTE_MATCH(-101);
 
 	/**
-	 * Rule weight, the higher the weight the more precise term match
+	 * Rule weight, the higher the weight the more precise term match.
 	 */
 	private final int weight;
 
 	/**
-	 * 
+	 * @param weight expected to be unique! (within this context)
 	 */
-	private MatchTermRule(int weight) {
+	private MatchTermRule(final int weight) {
 		this.weight = weight;
 	}
 

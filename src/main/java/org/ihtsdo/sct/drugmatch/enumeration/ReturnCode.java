@@ -1,11 +1,7 @@
-/**
- * 
- */
 package org.ihtsdo.sct.drugmatch.enumeration;
 
 /**
  * @author dev-team@carecom.dk
- *
  */
 public enum ReturnCode {
 
@@ -20,11 +16,10 @@ public enum ReturnCode {
 	private final int value;
 
 	/**
-	 * default constructor
-	 * 
+	 * Default constructor.
 	 * @param value value
 	 */
-	private ReturnCode(int value) {
+	private ReturnCode(final int value) {
 		this.value = value;
 	}
 

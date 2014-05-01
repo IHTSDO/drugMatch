@@ -4,7 +4,6 @@ import java.io.Serializable;
 
 /**
  * @author dev-team@carecom.dk
- *
  */
 public class Substance implements Comparable<Substance>, Serializable {
 
@@ -15,13 +14,13 @@ public class Substance implements Comparable<Substance>, Serializable {
 	 * @param nameEnglish
 	 * @param nameNational
 	 */
-	public Substance(String nameEnglish,
-			String nameNational) {
+	public Substance(final String nameEnglish,
+			final String nameNational) {
 		this.nameEnglish = nameEnglish;
 		this.nameNational = nameNational;
 	}
 
-	public int compareTo(Substance other) {
+	public final int compareTo(final Substance other) {
 		int result = this.nameEnglish.compareTo(other.nameEnglish);
 		if (result == 0) {
 			result = this.nameNational.compareTo(other.nameNational);
@@ -30,7 +29,7 @@ public class Substance implements Comparable<Substance>, Serializable {
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public final boolean equals(final Object obj) {
 		if (this == obj) {
 			return true;
 		}
@@ -59,14 +58,14 @@ public class Substance implements Comparable<Substance>, Serializable {
 	}
 
 	@Override
-	public int hashCode() {
+	public final int hashCode() {
 		final int prime = 31;
 		int result = prime + ((this.nameEnglish == null) ? 0 : this.nameEnglish.hashCode());
 		return prime * result + ((this.nameNational == null) ? 0 : this.nameNational.hashCode());
 	}
 
 	@Override
-	public String toString() {
+	public final String toString() {
 		return new StringBuilder(Substance.class.getSimpleName())
 			.append(" [nameEnglish=").append(this.nameEnglish)
 			.append(", nameNational=").append(this.nameNational)

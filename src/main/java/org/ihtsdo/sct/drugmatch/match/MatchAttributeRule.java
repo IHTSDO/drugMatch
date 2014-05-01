@@ -2,7 +2,6 @@ package org.ihtsdo.sct.drugmatch.match;
 
 /**
  * @author dev-team@carecom.dk
- * 
  */
 public enum MatchAttributeRule {
 
@@ -18,11 +17,11 @@ public enum MatchAttributeRule {
 
 	EXACT_MATCH_EXCLUDING_UNIT,
 
-	MISSING_DOSE_FORM,
+	DOSE_FORM_MISSING_CHECK_CONCEPT,
 
-	MISSING_SUBSTANCE,
+	SUBSTANCE_MISSING_CHECK_CONCEPT,
 
-	MISSING_UNIT,
+	UNIT_MISSING_CHECK_CONCEPT,
 
 	ZERO_MATCH;
 }

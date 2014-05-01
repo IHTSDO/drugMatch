@@ -11,6 +11,8 @@
 		<fileSet>
 			<directory>${project.basedir}</directory>
 			<includes>
+				<include>check.bat</include>
+				<include>check.sh</include>
 				<include>LICENSE</include>
 				<include>README.md</include>
 				<include>run.bat</include>

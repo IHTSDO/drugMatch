@@ -1,18 +1,25 @@
 package org.ihtsdo.sct.drugmatch.check;
 
-import java.io.FileWriter;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
+import java.util.TreeSet;
 
+import org.apache.commons.codec.CharEncoding;
 import org.ihtsdo.sct.drugmatch.check.extension.CheckValidationHelper;
 import org.ihtsdo.sct.drugmatch.exception.DrugMatchConfigurationException;
 import org.ihtsdo.sct.drugmatch.model.Component;
+import org.ihtsdo.sct.drugmatch.model.DoseForm;
 import org.ihtsdo.sct.drugmatch.model.Pharmaceutical;
 import org.ihtsdo.sct.drugmatch.model.Substance;
 import org.ihtsdo.sct.drugmatch.properties.DrugMatchProperties;
@@ -25,29 +32,61 @@ import au.com.bytecode.opencsv.CSVWriter;
 
 /**
  * @author dev-team@carecom.dk
- * 
  */
 public class Check {
 
 	private static final Logger log = LoggerFactory.getLogger(Check.class);
 
+	private static final Comparator<String[]> STRING_ARRAY_COMPARATOR = new Comparator<String[]>() {
+
+		public final int compare(final String[] o1,
+				final String[] o2) {
+			int result = o1.length - o2.length;
+			if (result == 0) {
+				String v1,
+					v2;
+				for (int i = 0; i < o1.length; i++) {
+					v1 = o1[i];
+					v2 = o2[i];
+					if (v1 == null
+							&& v2 == null) {
+						result = 0;
+					} else if (v1 == null) {
+						result = 1;
+					} else if (v2 == null) {
+						result = -1;
+					} else {
+						result = v1.compareTo(v2);
+					}
+					if (result != 0) {
+						break;
+					}
+				}
+			}
+			return result;
+		}
+
+	};
+
 	private final CheckValidation checkValidation;
 
-	private final DrugMatchProperties drugMatchProperties;
-
 	/**
-	 * {@link Substance} to names to matches (this construct enables direct link between English and national term)
+	 * {@link DoseForm} to names to matches (this construct enables direct link between English and national term).
 	 */
-	private final SortedMap<Substance, Map<String, List<ConceptSearchResultDescriptor>>> substances = new TreeMap<>();
+	private final SortedMap<DoseForm, Map<Locale, List<ConceptSearchResultDescriptor>>> doseForms = new TreeMap<>();
 
 	/**
-	 * unit name to matches
+	 * {@link Substance} to names to matches (this construct enables direct link between English and national term).
 	 */
-	private final SortedMap<String, Map<CheckLocale, List<ConceptSearchResultDescriptor>>> doseForms = new TreeMap<>(),
-			units = new TreeMap<>();
+	private final SortedMap<Substance, Map<Locale, List<ConceptSearchResultDescriptor>>> substances = new TreeMap<>();
 
 	/**
-	 * used to generate the report
+	 * Unit name to matches.
+	 */
+	private final SortedMap<String, Map<Locale, List<ConceptSearchResultDescriptor>>> units = new TreeMap<>();
+
+	/**
+	 * used to generate the report.
 	 */
 	private final List<Pharmaceutical> pharmaceuticals;
 
@@ -55,22 +94,16 @@ public class Check {
 
 	private final VerificationService service;
 
-	public Check(DrugMatchProperties drugMatchProperties,
-			List<Pharmaceutical> pharmaceuticals,
-			String isoNow,
-			VerificationService service) {
-		this.checkValidation = CheckValidationHelper.getCheckValidation(drugMatchProperties.getNationalNamespaceId());
-		this.drugMatchProperties = drugMatchProperties;
-		// extract pharmaceutical components in preparation for execution
-		Map<String, List<ConceptSearchResultDescriptor>> substanceNameToMatches;
+	public Check(final List<Pharmaceutical> pharmaceuticals,
+			final String isoNow,
+			final VerificationService service) throws DrugMatchConfigurationException {
+		this.checkValidation = (DrugMatchProperties.createGenericReport()) ? new CheckValidationImpl() : CheckValidationHelper.getCheckValidation(DrugMatchProperties.getNationalNamespaceId());
+		// extract unique pharmaceutical attributes in preparation for execution
 		for (Pharmaceutical pharmaceutical : pharmaceuticals) {
-			this.doseForms.put(pharmaceutical.doseForm, new HashMap<CheckLocale, List<ConceptSearchResultDescriptor>>());
+			this.doseForms.put(pharmaceutical.doseForm, new HashMap<Locale, List<ConceptSearchResultDescriptor>>());
 			for (Component component : pharmaceutical.components) {
-				substanceNameToMatches = new HashMap<>();
-				substanceNameToMatches.put(component.substance.nameEnglish, null);
-				substanceNameToMatches.put(component.substance.nameNational, null);
-				this.substances.put(component.substance, substanceNameToMatches);
-				this.units.put(component.unit, new HashMap<CheckLocale, List<ConceptSearchResultDescriptor>>());
+				this.substances.put(component.substance, new HashMap<Locale, List<ConceptSearchResultDescriptor>>());
+				this.units.put(component.unit, new HashMap<Locale, List<ConceptSearchResultDescriptor>>());
 			}
 		}
 		this.pharmaceuticals = pharmaceuticals;
@@ -78,8 +111,8 @@ public class Check {
 		this.service = service;
 	}
 
-	public char getOutputFileContentSeparator() {
-		String separatorSetting = this.drugMatchProperties.getFileContentSeparatorCharacter();
+	public static char getOutputFileContentSeparator() throws DrugMatchConfigurationException {
+		String separatorSetting = DrugMatchProperties.getFileContentSeparatorCharacter();
 		if (separatorSetting == null) {
 			separatorSetting = ";";
 		}
@@ -88,104 +121,110 @@ public class Check {
 	}
 
 	/**
-	 * "Check" dose forms
-	 * @throws DrugMatchConfigurationException 
-	 * @throws IOException 
+	 * "Check" dose forms.
+	 * @throws DrugMatchConfigurationException
+	 * @throws IOException
 	 */
 	private void checkDoseForms() throws IOException, DrugMatchConfigurationException {
 		log.info("Starting Dose form \"Check\" ({} Dose forms)", this.doseForms.size());
 		List<ConceptSearchResultDescriptor> matches;
-		for (Map.Entry<String, Map<CheckLocale, List<ConceptSearchResultDescriptor>>> entry : this.doseForms.entrySet()) {
+		for (Map.Entry<DoseForm, Map<Locale, List<ConceptSearchResultDescriptor>>> entry : this.doseForms.entrySet()) {
 			// "check" national
-			matches = this.service.getDoseFormExactNationalPreferredTermMatch(entry.getKey());
-			entry.getValue().put(CheckLocale.NATIONAL, matches);
+			matches = this.service.getDoseFormExactNationalPreferredTermMatch(entry.getKey().nameNational);
+			entry.getValue().put(Locale.NATIONAL, matches);
 			if (matches.isEmpty()) {
 				// "check" English, when unmatched national
-				entry.getValue().put(CheckLocale.ENGLISH,
-						this.service.getDoseFormExactEnglishPreferredTermMatch(entry.getKey()));
+				entry.getValue().put(Locale.ENGLISH,
+						this.service.getDoseFormExactEnglishPreferredTermMatch(entry.getKey().nameEnglish));
 			}
 		}
 		log.info("Completed Dose form \"Check\"");
-		log.info("Starting Dose form \"Check\" report");
-		report(CheckComponent.DOSE_FORM,
-				"dose_form");
-		log.info("Completed Dose form \"Check\" report");
+		log.info("Starting Dose form \"Check\" English report");
+		// dose form English report
+		report(Report.DOSE_FORM_ENGLISH,
+				"dose_form_english");
+		log.info("Completed Dose form \"Check\" English report");
+		log.info("Starting Dose form \"Check\" national report");
+		// dose form national report
+		report(Report.DOSE_FORM_NATIONAL,
+				"dose_form_national");
+		log.info("Completed Dose form \"Check\" national report");
 	}
 
 	/**
-	 * "Check" substances
-	 * @throws DrugMatchConfigurationException 
-	 * @throws IOException 
+	 * "Check" substances.
+	 * @throws DrugMatchConfigurationException
+	 * @throws IOException
 	 */
 	private void checkSubstances() throws IOException, DrugMatchConfigurationException {
 		log.info("Starting Substance \"Check\" ({} Substances)", this.substances.size());
 		List<ConceptSearchResultDescriptor> matches;
-		for (Map.Entry<Substance, Map<String, List<ConceptSearchResultDescriptor>>> entry : this.substances.entrySet()) {
+		for (Map.Entry<Substance, Map<Locale, List<ConceptSearchResultDescriptor>>> entry : this.substances.entrySet()) {
 			// "check" national
 			matches = this.service.getSubstanceExactNationalPreferredTermMatch(entry.getKey().nameNational);
-			entry.getValue().put(entry.getKey().nameNational, matches);
+			entry.getValue().put(Locale.NATIONAL, matches);
 			if (matches.isEmpty()) {
 				// "check" English, when unmatched national
-				entry.getValue().put(entry.getKey().nameEnglish,
+				entry.getValue().put(Locale.ENGLISH,
 						this.service.getSubstanceExactEnglishPreferredTermMatch(entry.getKey().nameEnglish));
 			}
 		}
 		log.info("Completed Substance \"Check\"");
-		log.info("Starting Substance \"Check\" english report");
-		// substance english report
-		report(CheckComponent.SUBSTANCE_ENGLISH,
+		log.info("Starting Substance \"Check\" English report");
+		// substance English report
+		report(Report.SUBSTANCE_ENGLISH,
 				"substance_english");
-		log.info("Completed Substance \"Check\" english report");
+		log.info("Completed Substance \"Check\" English report");
 		log.info("Starting Substance \"Check\" national report");
 		// substance national report
-		report(CheckComponent.SUBSTANCE_NATIONAL,
+		report(Report.SUBSTANCE_NATIONAL,
 				"substance_national");
 		log.info("Completed Substance \"Check\" national report");
 	}
 
 	/**
-	 * "Check" units
-	 * @throws DrugMatchConfigurationException 
-	 * @throws IOException 
+	 * "Check" units.
+	 * @throws DrugMatchConfigurationException
+	 * @throws IOException
 	 */
 	private void checkUnits() throws IOException, DrugMatchConfigurationException {
 		log.info("Starting Unit \"Check\" ({} Units)", this.units.size());
 		List<ConceptSearchResultDescriptor> matches;
-		for (Map.Entry<String, Map<CheckLocale, List<ConceptSearchResultDescriptor>>> entry : this.units.entrySet()) {
+		for (Map.Entry<String, Map<Locale, List<ConceptSearchResultDescriptor>>> entry : this.units.entrySet()) {
 			// "check" national
 			matches = this.service.getUnitExactNationalPreferredTermMatch(entry.getKey());
-			entry.getValue().put(CheckLocale.NATIONAL, matches);
+			entry.getValue().put(Locale.NATIONAL, matches);
 			if (matches.isEmpty()) {
 				// "check" English, when unmatched national
-				entry.getValue().put(CheckLocale.ENGLISH,
+				entry.getValue().put(Locale.ENGLISH,
 						this.service.getUnitExactEnglishPreferredTermMatch(entry.getKey()));
 			}
 		}
 		log.info("Completed Unit \"Check\"");
 		log.info("Starting Unit \"Check\" report");
-		report(CheckComponent.UNIT,
+		report(Report.UNIT,
 				"unit");
 		log.info("Completed Unit \"Check\" report");
 	}
 
 	/**
-	 * Extract {@link CheckRule#CASE_INSENSITIVE_MATCH} & {@link CheckRule#EXACT_MATCH} matches from prospects
-	 * 
+	 * Extract {@link CheckRule#CASE_INSENSITIVE_MATCH} & {@link CheckRule#EXACT_MATCH} matches from prospects.
 	 * @param prospects
+	 * @return {@link Map}(Component name, SNOMED CT Concept ID)
 	 */
-	private Map<String, Long> getMatches(Map<String, Map<CheckLocale, List<ConceptSearchResultDescriptor>>> prospects) {
+	private Map<String, Long> getMatches(final Map<String, Map<Locale, List<ConceptSearchResultDescriptor>>> prospects) {
 		Map<String, Long> result = new HashMap<>(prospects.size());
 		List<ConceptSearchResultDescriptor> englishDescriptors,
 		matchDescriptors,
 		nationalDescriptors;
 		CheckRule checkRule;
-		for (Map.Entry<String, Map<CheckLocale, List<ConceptSearchResultDescriptor>>> prospectEntry : prospects.entrySet()) {
-			englishDescriptors = prospectEntry.getValue().get(CheckLocale.ENGLISH);
-			nationalDescriptors = prospectEntry.getValue().get(CheckLocale.NATIONAL);
+		for (Map.Entry<String, Map<Locale, List<ConceptSearchResultDescriptor>>> prospectEntry : prospects.entrySet()) {
+			englishDescriptors = prospectEntry.getValue().get(Locale.ENGLISH);
+			nationalDescriptors = prospectEntry.getValue().get(Locale.NATIONAL);
 			matchDescriptors = getMatchDescriptors(englishDescriptors, nationalDescriptors);
 			checkRule = getRule(prospectEntry.getKey(),
 					nationalDescriptors,
-					matchDescriptors); 
+					matchDescriptors);
 			if (matchDescriptors.size() == 1
 					&& (CheckRule.CASE_INSENSITIVE_MATCH.equals(checkRule)
 							|| CheckRule.EXACT_MATCH.equals(checkRule)
@@ -199,7 +238,7 @@ public class Check {
 		return result;
 	}
 
-	public void execute() throws IOException, DrugMatchConfigurationException {
+	public final void execute() throws IOException, DrugMatchConfigurationException {
 		log.info("Starting \"Check\"");
 		checkDoseForms();
 		checkSubstances();
@@ -210,27 +249,20 @@ public class Check {
 	/**
 	 * @return {@link Map}(Component name, SNOMED CT Concept ID)
 	 */
-	public Map<String, Long> getDoseForm2Id() {
-		return getMatches(this.doseForms);
-	}
-
-	/**
-	 * @return {@link Map}(Component name, SNOMED CT Concept ID)
-	 */
-	public Map<String, Long> getSubstance2Id() {
-		Map<String, Map<CheckLocale, List<ConceptSearchResultDescriptor>>> prospects = new HashMap<>(this.substances.size());
+	public final Map<String, Long> getDoseForm2Id() {
+		Map<String, Map<Locale, List<ConceptSearchResultDescriptor>>> prospects = new HashMap<>(this.doseForms.size());
 		List<ConceptSearchResultDescriptor> matches;
-		String substanceName;
-		for (Map.Entry<Substance, Map<String, List<ConceptSearchResultDescriptor>>> entry : this.substances.entrySet()) {
-			substanceName = entry.getKey().nameNational;
-			matches = entry.getValue().get(substanceName);
+		String doseFormName;
+		for (Map.Entry<DoseForm, Map<Locale, List<ConceptSearchResultDescriptor>>> entry : this.doseForms.entrySet()) {
+			doseFormName = entry.getKey().nameNational;
+			matches = entry.getValue().get(Locale.NATIONAL);
 			if (matches.isEmpty()) {
-				substanceName = entry.getKey().nameEnglish;
-				prospects.put(substanceName,
-						Collections.singletonMap(CheckLocale.ENGLISH, entry.getValue().get(substanceName)));
+				doseFormName = entry.getKey().nameEnglish;
+				prospects.put(doseFormName,
+						Collections.singletonMap(Locale.ENGLISH, entry.getValue().get(Locale.ENGLISH)));
 			} else {
-				prospects.put(substanceName,
-						Collections.singletonMap(CheckLocale.NATIONAL, matches));
+				prospects.put(doseFormName,
+						Collections.singletonMap(Locale.NATIONAL, matches));
 			}
 		}
 		return getMatches(prospects);
@@ -239,16 +271,39 @@ public class Check {
 	/**
 	 * @return {@link Map}(Component name, SNOMED CT Concept ID)
 	 */
-	public Map<String, Long> getUnit2Id() {
+	public final Map<String, Long> getSubstance2Id() {
+		Map<String, Map<Locale, List<ConceptSearchResultDescriptor>>> prospects = new HashMap<>(this.substances.size());
+		List<ConceptSearchResultDescriptor> matches;
+		String substanceName;
+		for (Map.Entry<Substance, Map<Locale, List<ConceptSearchResultDescriptor>>> entry : this.substances.entrySet()) {
+			substanceName = entry.getKey().nameNational;
+			matches = entry.getValue().get(Locale.NATIONAL);
+			if (matches.isEmpty()) {
+				substanceName = entry.getKey().nameEnglish;
+				prospects.put(substanceName,
+						Collections.singletonMap(Locale.ENGLISH, entry.getValue().get(Locale.ENGLISH)));
+			} else {
+				prospects.put(substanceName,
+						Collections.singletonMap(Locale.NATIONAL, matches));
+			}
+		}
+		return getMatches(prospects);
+	}
+
+	/**
+	 * @return {@link Map}(Component name, SNOMED CT Concept ID)
+	 */
+	public final Map<String, Long> getUnit2Id() {
 		return getMatches(this.units);
 	}
 
-	private void report(CheckComponent checkComponent,
-			String fileName) throws IOException, DrugMatchConfigurationException {
-		String fullFileName = this.drugMatchProperties.getOutputDirectory().getPath() + "/check_" + fileName + "_" + this.isoNow + ".csv";
-		String quoteCharacter = this.drugMatchProperties.getFileContentQuoteCharacter();
+	private void report(final Report report,
+			final String fileName) throws IOException, DrugMatchConfigurationException {
+		String fullFileName = DrugMatchProperties.getOutputDirectory().getPath() + File.separator + "check_" + fileName + "_" + this.isoNow + ".csv";
+		String quoteCharacter = DrugMatchProperties.getFileContentQuoteCharacter();
 		char quoteChar = (quoteCharacter == null) ? CSVWriter.NO_QUOTE_CHARACTER : quoteCharacter.charAt(0);
-		try (CSVWriter writer = new CSVWriter(new FileWriter(fullFileName),
+		try (CSVWriter writer = new CSVWriter(new OutputStreamWriter(new FileOutputStream(fullFileName),
+						CharEncoding.UTF_8),
 				getOutputFileContentSeparator(),
 				quoteChar)) {
 			// header
@@ -265,38 +320,59 @@ public class Check {
 			String componentName;
 			List<ConceptSearchResultDescriptor> englishDescriptors,
 				nationalDescriptors;
-			boolean isComponent;
 			List<String[]> pharmaceuticalLines;
-			Map<String, List<ConceptSearchResultDescriptor>> substance2Descriptors;
+			Set<String[]> uniquePharmaceuticalLines;
 			for (Pharmaceutical pharmaceutical : this.pharmaceuticals) {
-				switch (checkComponent) {
-				case DOSE_FORM:
-					isComponent = false;
-					break;
-				default:
-					isComponent = true;
-					break;
-				}
-				if (isComponent) {
+				if (Report.DOSE_FORM_ENGLISH.equals(report)
+						|| Report.DOSE_FORM_NATIONAL.equals(report)) {
+					switch (report) {
+					case DOSE_FORM_ENGLISH:
+						componentName = pharmaceutical.doseForm.nameEnglish;
+						englishDescriptors = this.doseForms.get(pharmaceutical.doseForm).get(Locale.ENGLISH);
+						nationalDescriptors = null;
+						break;
+					case DOSE_FORM_NATIONAL:
+						componentName = pharmaceutical.doseForm.nameNational;
+						englishDescriptors = null;
+						nationalDescriptors = this.doseForms.get(pharmaceutical.doseForm).get(Locale.NATIONAL);
+						break;
+					default:
+						componentName = null;
+						englishDescriptors = null;
+						nationalDescriptors = null;
+						log.debug("Unable to generate check report for dose form {} with Drug ID: {}", pharmaceutical.doseForm, pharmaceutical.drugId);
+						break;
+					}
+					pharmaceuticalLines = Collections.singletonList(getColumns(pharmaceutical.drugId,
+							componentName,
+							nationalDescriptors,
+							getMatchDescriptors(englishDescriptors, nationalDescriptors)));
+				} else if (Report.UNIT.equals(report)) {
+					// "compress" unit output, excluding duplicated rows
+					uniquePharmaceuticalLines = new TreeSet<>(STRING_ARRAY_COMPARATOR);
+					for (Component component : pharmaceutical.components) {
+						componentName = component.unit;
+						englishDescriptors = this.units.get(componentName).get(Locale.ENGLISH);
+						nationalDescriptors = this.units.get(componentName).get(Locale.NATIONAL);
+						uniquePharmaceuticalLines.add(getColumns(pharmaceutical.drugId,
+							componentName,
+							nationalDescriptors,
+							getMatchDescriptors(englishDescriptors, nationalDescriptors)));
+					}
+					pharmaceuticalLines = new ArrayList<>(uniquePharmaceuticalLines);
+				} else {
 					pharmaceuticalLines = new ArrayList<>(pharmaceutical.components.size());
 					for (Component component : pharmaceutical.components) {
-						switch (checkComponent) {
+						switch (report) {
 						case SUBSTANCE_ENGLISH:
 							componentName = component.substance.nameEnglish;
-							substance2Descriptors = this.substances.get(component.substance);
-							englishDescriptors = (substance2Descriptors == null) ? null : substance2Descriptors.get(componentName);
+							englishDescriptors = this.substances.get(component.substance).get(Locale.ENGLISH);
 							nationalDescriptors = null;
 							break;
 						case SUBSTANCE_NATIONAL:
 							componentName = component.substance.nameNational;
-							substance2Descriptors = this.substances.get(component.substance);
 							englishDescriptors = null;
-							nationalDescriptors = (substance2Descriptors == null) ? null : substance2Descriptors.get(componentName);
-							break;
-						case UNIT:
-							componentName = component.unit;
-							englishDescriptors = this.units.get(componentName).get(CheckLocale.ENGLISH);
-							nationalDescriptors = this.units.get(componentName).get(CheckLocale.NATIONAL);
+							nationalDescriptors = this.substances.get(component.substance).get(Locale.NATIONAL);
 							break;
 						default:
 							componentName = null;
@@ -310,24 +386,6 @@ public class Check {
 								nationalDescriptors,
 								getMatchDescriptors(englishDescriptors, nationalDescriptors)));
 					}
-				} else {
-					switch (checkComponent) {
-					case DOSE_FORM:
-						componentName = pharmaceutical.doseForm;
-						englishDescriptors = this.doseForms.get(componentName).get(CheckLocale.ENGLISH);
-						nationalDescriptors = this.doseForms.get(componentName).get(CheckLocale.NATIONAL);
-						break;
-					default:
-						componentName = null;
-						englishDescriptors = null;
-						nationalDescriptors = null;
-						log.debug("Unable to generate check report for {}", pharmaceutical);
-						break;
-					}
-					pharmaceuticalLines = Collections.singletonList(getColumns(pharmaceutical.drugId,
-							componentName,
-							nationalDescriptors,
-							getMatchDescriptors(englishDescriptors, nationalDescriptors)));
 				}
 				writer.writeAll(pharmaceuticalLines);
 			}
@@ -341,49 +399,60 @@ public class Check {
 	 * @param nationalDescriptors
 	 * @return nationalDescriptors if not empty, otherwise englishDescriptors
 	 */
-	public static List<ConceptSearchResultDescriptor> getMatchDescriptors(List<ConceptSearchResultDescriptor> englishDescriptors,
-			List<ConceptSearchResultDescriptor> nationalDescriptors) {
+	public static List<ConceptSearchResultDescriptor> getMatchDescriptors(final List<ConceptSearchResultDescriptor> englishDescriptors,
+			final List<ConceptSearchResultDescriptor> nationalDescriptors) {
 		if (nationalDescriptors != null
-				&& nationalDescriptors.size() > 0) {
+				&& (nationalDescriptors.size() > 0
+						|| englishDescriptors == null)) {
 			return nationalDescriptors;
 		}
 		return englishDescriptors;
 	}
 
-	public String[] getColumns(String drugId,
-			String componentName,
-			List<ConceptSearchResultDescriptor> nationalDescriptors,
-			List<ConceptSearchResultDescriptor> matchDescriptors) {
+	/**
+	 * @param drugId
+	 * @param componentName
+	 * @param nationalDescriptors
+	 * @param matchDescriptors
+	 * @return report columns
+	 */
+	public final String[] getColumns(final String drugId,
+			final String componentName,
+			final List<ConceptSearchResultDescriptor> nationalDescriptors,
+			final List<ConceptSearchResultDescriptor> matchDescriptors) {
 		String[] columns = new String[6];
 		columns[0] = drugId;
 		columns[1] = componentName;
 		if (matchDescriptors != null
 				&& matchDescriptors.size() == 1) {
-				ConceptSearchResultDescriptor descriptor = matchDescriptors.iterator().next();
-				columns[2] = descriptor.conceptCode;
-				columns[3] = descriptor.healthtermDescriptionId.toString();
-				columns[4] = descriptor.descriptionTerm;
+			ConceptSearchResultDescriptor descriptor = matchDescriptors.iterator().next();
+			columns[2] = descriptor.conceptCode;
+			columns[3] = descriptor.healthtermDescriptionId.toString();
+			columns[4] = descriptor.descriptionTerm;
 		}
-		columns[5] = this.checkValidation.getCheckRuleViolationMessage(getRule(componentName,
+		columns[5] = this.checkValidation.getMessage(getRule(componentName,
 				nationalDescriptors,
 				matchDescriptors));
 		return columns;
 	}
 
 	/**
-	 * @param descriptors
+	 * @param componentName
+	 * @param nationalDescriptors
+	 * @param matchDescriptors
 	 * @return {@link CheckRule} matched
 	 */
-	public CheckRule getRule(String componentName,
-			List<ConceptSearchResultDescriptor> nationalDescriptors,
-			List<ConceptSearchResultDescriptor> matchDescriptors) {
+	public final CheckRule getRule(final String componentName,
+			final List<ConceptSearchResultDescriptor> nationalDescriptors,
+			final List<ConceptSearchResultDescriptor> matchDescriptors) {
 		// generic checks
-		if (nationalDescriptors != null
-				&& nationalDescriptors.isEmpty()) {
-			return CheckRule.TRANSLATION_MISSING;
-		} // else
 		if (matchDescriptors == null) {
 			return CheckRule.UNCHECKED;
+		} // else
+		if (nationalDescriptors != null
+				&& nationalDescriptors.isEmpty()
+				&& matchDescriptors.size() > 0) {
+			return CheckRule.TRANSLATION_MISSING;
 		} // else
 		if (matchDescriptors.isEmpty()) {
 			return CheckRule.ZERO_MATCH;
@@ -396,14 +465,15 @@ public class Check {
 		return CheckRule.AMBIGUOUS_MATCH;
 	}
 
-	private enum CheckComponent {
-		DOSE_FORM,
+	private enum Report {
+		DOSE_FORM_ENGLISH,
+		DOSE_FORM_NATIONAL,
 		SUBSTANCE_ENGLISH,
 		SUBSTANCE_NATIONAL,
 		UNIT;
 	}
 
-	private enum CheckLocale {
+	private enum Locale {
 		ENGLISH,
 		NATIONAL;
 	}

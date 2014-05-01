@@ -12,6 +12,7 @@ import java.security.cert.X509Certificate;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -25,7 +26,6 @@ import org.apache.commons.validator.routines.UrlValidator;
 import org.apache.http.HttpStatus;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
-import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.CredentialsProvider;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -45,64 +45,57 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * @author dev-team@carecom.dk
- *
  */
 public class VerificationServiceImpl implements VerificationService {
 
 	private static final Logger log = LoggerFactory.getLogger(VerificationServiceImpl.class);
 
+	private static final TypeReference<List<ConceptDescriptor>> CONCEPT_DESCRIPTOR_TYPE_REFERENCE = new TypeReference<List<ConceptDescriptor>>() {};
+
+	private static final TypeReference<List<ConceptSearchResultDescriptor>> CONCEPT_SEARCH_RESULT_DESCRIPTOR_TYPE_REFERENCE = new TypeReference<List<ConceptSearchResultDescriptor>>() {};
+
+	private static final TypeReference<List<LogEntry>> LOG_ENTRY_TYPE_REFERENCE = new TypeReference<List<LogEntry>>() {};
+
 	private final CredentialsProvider credentialsProvider;
 
 	private SSLConnectionSocketFactory customSslSocketFactory = null;
 
-	private final DrugMatchProperties drugMatchProperties = new DrugMatchProperties();
-
-	private final Set<String> englishLocaleCodes = new TreeSet<>(Arrays.asList(new String[] { "en", "en-GB", "en-US" }));
-
-	private final TypeReference<List<ConceptDescriptor>> conceptDescriptorTypeReference = new TypeReference<List<ConceptDescriptor>>(){};
-
-	private final TypeReference<List<ConceptSearchResultDescriptor>> conceptSearchResultDescriptorTypeReference = new TypeReference<List<ConceptSearchResultDescriptor>>(){};
-
-	private final TypeReference<List<LogEntry>> logEntryTypeReference = new TypeReference<List<LogEntry>>(){};
+	private final Set<String> englishLocaleCodes = new TreeSet<>(Arrays.asList(new String[] {"en", "en-GB", "en-US"}));
 
 	public VerificationServiceImpl() throws DrugMatchConfigurationException, KeyManagementException, NoSuchAlgorithmException, IOException {
-		String serviceUrl = this.drugMatchProperties.getVerificationService();
+		String serviceUrl = DrugMatchProperties.getVerificationService();
 		if (serviceUrl == null) {
 			throw new DrugMatchConfigurationException("Unable to proceed, cause: '" + DrugMatchProperties.VERIFICATION_SERVICE + "' isn't set!");
 		}
-		UrlValidator urlValidator = new UrlValidator(new String[] { "http", "https" });
-		if (!urlValidator.isValid(serviceUrl.toLowerCase())) {
+		UrlValidator urlValidator = new UrlValidator(new String[] {"http", "https"});
+		if (!urlValidator.isValid(serviceUrl.toLowerCase(Locale.ENGLISH))) {
 			throw new DrugMatchConfigurationException("Unable to proceed, cause: '" + DrugMatchProperties.VERIFICATION_SERVICE + "' isn't a valid HTTP/HTTPS URL!");
 		}
-		String login = this.drugMatchProperties.getVerificationLogin();
+		String login = DrugMatchProperties.getVerificationLogin();
 		if (login == null) {
 			throw new DrugMatchConfigurationException("Unable to proceed, cause: '" + DrugMatchProperties.VERIFICATION_LOGIN + "' isn't set!");
 		}
-		String password = this.drugMatchProperties.getVerificationPassword();
+		String password = DrugMatchProperties.getVerificationPassword();
 		if (password == null) {
 			throw new DrugMatchConfigurationException("Unable to proceed, cause: '" + DrugMatchProperties.VERIFICATION_PASSWORD + "' isn't set!");
 		}
-		
 		URL url = new URL(serviceUrl);
 		int port;
 		if (url.getPort() > 0) {
 			port = url.getPort();
 		} else {
-			port = ("https".equals(url.getProtocol().toLowerCase())) ? 443 : 80;
+			port = ("https".equals(url.getProtocol().toLowerCase(Locale.ENGLISH))) ? 443 : 80;
 		}
 		this.credentialsProvider = new BasicCredentialsProvider();
 		this.credentialsProvider.setCredentials(
 				new AuthScope(url.getHost(), port),
-				new UsernamePasswordCredentials(login,password));
-		
+				new UsernamePasswordCredentials(login, password));
 		// test if CA root is present in JRE, otherwise invoke SSL workaround
 		try (CloseableHttpClient httpclient = HttpClients.createDefault();) {
 			HttpGet httpget = new HttpGet(url.getProtocol() + "://" + url.getHost() + ":" + port);
@@ -123,31 +116,31 @@ public class VerificationServiceImpl implements VerificationService {
 
 	/**
 	 *  Workaround for ex. StartCom CA root certificate is not included in the JRE's default keystore.
-	 * 
-	 * @return
+	 * @return {@link SSLContext}
 	 * @throws KeyManagementException
 	 * @throws NoSuchAlgorithmException
 	 */
 	private static SSLContext initializeCerts() throws KeyManagementException, NoSuchAlgorithmException {
 
-		TrustManager[] trustAllCerts = new TrustManager[] { new X509TrustManager() {
-			@Override
-			public X509Certificate[] getAcceptedIssuers() {
-				return null;
-			}
+		TrustManager[] trustAllCerts = new TrustManager[] {
+			new X509TrustManager() {
+				@Override
+				public X509Certificate[] getAcceptedIssuers() {
+					return new X509Certificate[0];
+				}
 
-			@Override
-			public void checkClientTrusted(X509Certificate[] certs,
-					String authType) {
-				// empty on purpose
-			}
+				@Override
+				public void checkClientTrusted(final X509Certificate[] certs,
+						final String authType) {
+					// empty on purpose
+				}
 
-			@Override
-			public void checkServerTrusted(X509Certificate[] certs,
-					String authType) {
-				// empty on purpose
-			}
-		} };
+				@Override
+				public void checkServerTrusted(final X509Certificate[] certs,
+						final String authType) {
+					// empty on purpose
+				}
+			}};
 
 		// Install the all-trusting trust manager
 		SSLContext sc = SSLContext.getInstance("SSL");
@@ -162,8 +155,8 @@ public class VerificationServiceImpl implements VerificationService {
 		return HttpClients.custom().setDefaultCredentialsProvider(this.credentialsProvider).setSSLSocketFactory(this.customSslSocketFactory).build();
 	}
 
-	private HttpGet getHttpGetJSON(String path) {
-		StringBuilder url = new StringBuilder(this.drugMatchProperties.getVerificationService());
+	private static HttpGet getHttpGetJSON(final String path) throws DrugMatchConfigurationException {
+		StringBuilder url = new StringBuilder(DrugMatchProperties.getVerificationService());
 		if (!path.startsWith("/")) {
 			url.append('/');
 		}
@@ -173,8 +166,8 @@ public class VerificationServiceImpl implements VerificationService {
 		return httpget;
 	}
 
-	public List<ConceptSearchResultDescriptor> getAttributeExactMatch(Set<Long> attributeIds,
-			Set<Long> valueIds) throws IOException, DrugMatchConfigurationException {
+	public final List<ConceptSearchResultDescriptor> getAttributeExactMatch(final Set<Long> attributeIds,
+			final Set<Long> valueIds) throws DrugMatchConfigurationException, IOException {
 		// construct path
 		StringBuilder path = new StringBuilder("/webservice/restricted/v1.0/search/concept/attributeRelationExact?");
 		// attribute (Relationship type ID)
@@ -191,7 +184,7 @@ public class VerificationServiceImpl implements VerificationService {
 		return getConceptSearchResult(path.toString());
 	}
 
-	public List<ConceptDescriptor> getConceptsByIds(Set<Long> conceptIds) throws IOException {
+	public final List<ConceptDescriptor> getConceptsByIds(final Set<Long> conceptIds) throws DrugMatchConfigurationException, IOException {
 		try (CloseableHttpClient httpclient = getHttpClient();) {
 			// construct path
 			StringBuilder path = new StringBuilder("/webservice/restricted/v1.0/lookup/concept/byId?");
@@ -206,20 +199,20 @@ public class VerificationServiceImpl implements VerificationService {
 				if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
 					ObjectMapper mapper = new ObjectMapper();
 					JsonNode results = mapper.readTree(response.getEntity().getContent()).get("conceptDetailDescriptor");
-					List<ConceptDescriptor> result = mapper.readValue(results.traverse(), this.conceptDescriptorTypeReference);
+					List<ConceptDescriptor> result = mapper.readValue(results.traverse(), CONCEPT_DESCRIPTOR_TYPE_REFERENCE);
 					EntityUtils.consume(response.getEntity());
 					return result;
 				} // else
 				StringBuilder sb = new StringBuilder();
-				try {
-					BufferedReader br = new BufferedReader(new InputStreamReader(response.getEntity().getContent()));
+				try (BufferedReader br = new BufferedReader(new InputStreamReader(response.getEntity().getContent(),
+						CharEncoding.UTF_8));) {
 					String line;
 					while ((line = br.readLine()) != null) {
 						sb.append(line);
 					}
 					ObjectMapper mapper = new ObjectMapper();
 					JsonNode logEntries = mapper.readTree(sb.toString()).get("log");
-					List<LogEntry> result = mapper.readValue(logEntries.traverse(), this.logEntryTypeReference);
+					List<LogEntry> result = mapper.readValue(logEntries.traverse(), LOG_ENTRY_TYPE_REFERENCE);
 					EntityUtils.consume(response.getEntity());
 					if (result.isEmpty()) {
 						throw new IOException("Unable to retrieve Concept by ID, cause: HTTP status code " + response.getStatusLine().getStatusCode());
@@ -233,15 +226,15 @@ public class VerificationServiceImpl implements VerificationService {
 		}
 	}
 
-	public List<ConceptSearchResultDescriptor> getDoseFormExactEnglishPreferredTermMatch(String query) throws IOException, DrugMatchConfigurationException {
+	public final List<ConceptSearchResultDescriptor> getDoseFormExactEnglishPreferredTermMatch(final String query) throws DrugMatchConfigurationException, IOException {
 		return getDoseFormExactPreferredTermMatch(
 				Collections.<String>emptySet(), // unable to filter on namespace as the SNOMED CT international release now contains 1+ namespace.
 				query,
 				this.englishLocaleCodes);
 	}
 
-	public List<ConceptSearchResultDescriptor> getDoseFormExactNationalPreferredTermMatch(String query) throws IOException, DrugMatchConfigurationException {
-		String nationalNamespaceId = this.drugMatchProperties.getNationalNamespaceId();
+	public final List<ConceptSearchResultDescriptor> getDoseFormExactNationalPreferredTermMatch(final String query) throws DrugMatchConfigurationException, IOException {
+		String nationalNamespaceId = DrugMatchProperties.getNationalNamespaceId();
 		if (nationalNamespaceId == null) {
 			throw new DrugMatchConfigurationException("Unable to proceed, cause: '" + DrugMatchProperties.NATIONAL_NAMESPACE_ID + "' isn't set!");
 		} // else
@@ -251,11 +244,10 @@ public class VerificationServiceImpl implements VerificationService {
 				Collections.<String>emptySet());
 	}
 
-	public List<ConceptSearchResultDescriptor> getDoseFormExactPreferredTermMatch(
-			Set<String> namespaceIds,
-			String query,
-			Set<String> localeCodes) throws IOException, DrugMatchConfigurationException {
-		Long constraintId = this.drugMatchProperties.getConstraintIdDoseForm();
+	public final List<ConceptSearchResultDescriptor> getDoseFormExactPreferredTermMatch(final Set<String> namespaceIds,
+			final String query,
+			final Set<String> localeCodes) throws DrugMatchConfigurationException, IOException {
+		Long constraintId = DrugMatchProperties.getConstraintIdDoseForm();
 		if (constraintId == null) {
 			throw new DrugMatchConfigurationException("Unable to proceed, cause: '" + DrugMatchProperties.CONSTRAINT_ID_DOSE_FORM + "' isn't set!");
 		} // else
@@ -266,11 +258,10 @@ public class VerificationServiceImpl implements VerificationService {
 				query);
 	}
 
-	public List<ConceptSearchResultDescriptor> getExactPreferredTermMatch(
-			Set<String> namespaceIds,
-			Set<Long> constraintIds,
-			Set<String> localeCodes,
-			String query) throws IOException {
+	public final List<ConceptSearchResultDescriptor> getExactPreferredTermMatch(final Set<String> namespaceIds,
+			final Set<Long> constraintIds,
+			final Set<String> localeCodes,
+			final String query) throws DrugMatchConfigurationException, IOException {
 		return getExactTermMatch(
 				constraintIds,
 				namespaceIds,
@@ -279,12 +270,11 @@ public class VerificationServiceImpl implements VerificationService {
 				query);
 	}
 
-	public List<ConceptSearchResultDescriptor> getExactTermMatch(
-			Set<Long> constraintIds,
-			Set<String> namespaceIds,
-			Set<DescriptionType> descriptionTypes,
-			Set<String> localeCodes,
-			String query) throws IOException {
+	public final List<ConceptSearchResultDescriptor> getExactTermMatch(final Set<Long> constraintIds,
+			final Set<String> namespaceIds,
+			final Set<DescriptionType> descriptionTypes,
+			final Set<String> localeCodes,
+			final String query) throws DrugMatchConfigurationException, IOException {
 		// construct path
 		StringBuilder path = new StringBuilder("/webservice/restricted/v1.0/search/concept/exactSearch?query=");
 		path.append(URLEncoder.encode(query, CharEncoding.UTF_8));
@@ -312,9 +302,7 @@ public class VerificationServiceImpl implements VerificationService {
 		return getConceptSearchResult(path.toString());
 	}
 
-	private List<ConceptSearchResultDescriptor> getConceptSearchResult(
-			String path) throws IOException, JsonProcessingException,
-			JsonParseException, JsonMappingException, ClientProtocolException {
+	private List<ConceptSearchResultDescriptor> getConceptSearchResult(final String path) throws DrugMatchConfigurationException, IOException {
 		try (CloseableHttpClient httpclient = getHttpClient();) {
 			HttpGet httpget = getHttpGetJSON(path);
 			try (CloseableHttpResponse response = httpclient.execute(httpget);) {
@@ -322,20 +310,20 @@ public class VerificationServiceImpl implements VerificationService {
 				if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
 					ObjectMapper mapper = new ObjectMapper();
 					JsonNode results = mapper.readTree(response.getEntity().getContent()).get("result");
-					List<ConceptSearchResultDescriptor> result = mapper.readValue(results.traverse(), this.conceptSearchResultDescriptorTypeReference);
+					List<ConceptSearchResultDescriptor> result = mapper.readValue(results.traverse(), CONCEPT_SEARCH_RESULT_DESCRIPTOR_TYPE_REFERENCE);
 					EntityUtils.consume(response.getEntity());
 					return result;
 				} // else
 				StringBuilder sb = new StringBuilder();
-				try {
-					BufferedReader br = new BufferedReader(new InputStreamReader(response.getEntity().getContent()));
+				try (BufferedReader br = new BufferedReader(new InputStreamReader(response.getEntity().getContent(),
+						CharEncoding.UTF_8));) {
 					String line;
 					while ((line = br.readLine()) != null) {
 						sb.append(line);
 					}
 					ObjectMapper mapper = new ObjectMapper();
 					JsonNode logEntries = mapper.readTree(sb.toString()).get("log");
-					List<LogEntry> result = mapper.readValue(logEntries.traverse(), this.logEntryTypeReference);
+					List<LogEntry> result = mapper.readValue(logEntries.traverse(), LOG_ENTRY_TYPE_REFERENCE);
 					EntityUtils.consume(response.getEntity());
 					if (result.isEmpty()) {
 						throw new IOException("Unable to search for exact match, cause: HTTP status code " + response.getStatusLine().getStatusCode());
@@ -349,15 +337,15 @@ public class VerificationServiceImpl implements VerificationService {
 		}
 	}
 
-	public List<ConceptSearchResultDescriptor> getSubstanceExactEnglishPreferredTermMatch(String query) throws IOException, DrugMatchConfigurationException {
+	public final List<ConceptSearchResultDescriptor> getSubstanceExactEnglishPreferredTermMatch(final String query) throws DrugMatchConfigurationException, IOException {
 		return getSubstanceExactPreferredTermMatch(
 				Collections.<String>emptySet(), // unable to filter on namespace as the SNOMED CT international release now contains 1+ namespace.
 				query,
 				this.englishLocaleCodes);
 	}
 
-	public List<ConceptSearchResultDescriptor> getSubstanceExactNationalPreferredTermMatch(String query) throws IOException, DrugMatchConfigurationException {
-		String nationalNamespaceId = this.drugMatchProperties.getNationalNamespaceId();
+	public final List<ConceptSearchResultDescriptor> getSubstanceExactNationalPreferredTermMatch(final String query) throws DrugMatchConfigurationException, IOException {
+		String nationalNamespaceId = DrugMatchProperties.getNationalNamespaceId();
 		if (nationalNamespaceId == null) {
 			throw new DrugMatchConfigurationException("Unable to proceed, cause: '" + DrugMatchProperties.NATIONAL_NAMESPACE_ID + "' isn't set!");
 		} // else
@@ -367,11 +355,10 @@ public class VerificationServiceImpl implements VerificationService {
 				Collections.<String>emptySet());
 	}
 
-	public List<ConceptSearchResultDescriptor> getSubstanceExactPreferredTermMatch(
-			Set<String> namespaceIds,
-			String query,
-			Set<String> localeCodes) throws IOException, DrugMatchConfigurationException {
-		Long constraintId = this.drugMatchProperties.getConstraintIdSubstance();
+	public final List<ConceptSearchResultDescriptor> getSubstanceExactPreferredTermMatch(final Set<String> namespaceIds,
+			final String query,
+			final Set<String> localeCodes) throws DrugMatchConfigurationException, IOException {
+		Long constraintId = DrugMatchProperties.getConstraintIdSubstance();
 		if (constraintId == null) {
 			throw new DrugMatchConfigurationException("Unable to proceed, cause: '" + DrugMatchProperties.CONSTRAINT_ID_SUBSTANCE + "' isn't set!");
 		} // else
@@ -382,15 +369,15 @@ public class VerificationServiceImpl implements VerificationService {
 				query);
 	}
 
-	public List<ConceptSearchResultDescriptor> getUnitExactEnglishPreferredTermMatch(String query) throws IOException, DrugMatchConfigurationException {
+	public final List<ConceptSearchResultDescriptor> getUnitExactEnglishPreferredTermMatch(final String query) throws DrugMatchConfigurationException, IOException {
 		return getUnitExactPreferredTermMatch(
 				Collections.<String>emptySet(), // unable to filter on namespace as the SNOMED CT international release now contains 1+ namespace.
 				query,
 				this.englishLocaleCodes);
 	}
 
-	public List<ConceptSearchResultDescriptor> getUnitExactNationalPreferredTermMatch(String query) throws IOException, DrugMatchConfigurationException {
-		String nationalNamespaceId = this.drugMatchProperties.getNationalNamespaceId();
+	public final List<ConceptSearchResultDescriptor> getUnitExactNationalPreferredTermMatch(final String query) throws DrugMatchConfigurationException, IOException {
+		String nationalNamespaceId = DrugMatchProperties.getNationalNamespaceId();
 		if (nationalNamespaceId == null) {
 			throw new DrugMatchConfigurationException("Unable to proceed, cause: '" + DrugMatchProperties.NATIONAL_NAMESPACE_ID + "' isn't set!");
 		} // else
@@ -400,11 +387,10 @@ public class VerificationServiceImpl implements VerificationService {
 				Collections.<String>emptySet());
 	}
 
-	public List<ConceptSearchResultDescriptor> getUnitExactPreferredTermMatch(
-			Set<String> namespaceIds,
-			String query,
-			Set<String> localeCodes) throws IOException, DrugMatchConfigurationException {
-		Long constraintId = this.drugMatchProperties.getConstraintIdUnit();
+	public final List<ConceptSearchResultDescriptor> getUnitExactPreferredTermMatch(final Set<String> namespaceIds,
+			final String query,
+			final Set<String> localeCodes) throws DrugMatchConfigurationException, IOException {
+		Long constraintId = DrugMatchProperties.getConstraintIdUnit();
 		if (constraintId == null) {
 			throw new DrugMatchConfigurationException("Unable to proceed, cause: '" + DrugMatchProperties.CONSTRAINT_ID_UNIT + "' isn't set!");
 		} // else

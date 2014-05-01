@@ -10,24 +10,23 @@ import org.ihtsdo.sct.drugmatch.verification.service.healthterm.model.ConceptSea
 
 /**
  * @author dev-team@carecom.dk
- *
  */
 public interface VerificationService {
 
 	List<ConceptSearchResultDescriptor> getAttributeExactMatch(Set<Long> attributeIds,
-			Set<Long> valueIds) throws IOException, DrugMatchConfigurationException;
+			Set<Long> valueIds) throws DrugMatchConfigurationException, IOException;
 
-	List<ConceptDescriptor> getConceptsByIds(Set<Long> conceptIds) throws IOException;
+	List<ConceptDescriptor> getConceptsByIds(Set<Long> conceptIds) throws DrugMatchConfigurationException, IOException;
 
-	List<ConceptSearchResultDescriptor> getDoseFormExactEnglishPreferredTermMatch(String query) throws IOException, DrugMatchConfigurationException;
+	List<ConceptSearchResultDescriptor> getDoseFormExactEnglishPreferredTermMatch(String query) throws DrugMatchConfigurationException, IOException;
 
-	List<ConceptSearchResultDescriptor> getDoseFormExactNationalPreferredTermMatch(String query) throws IOException, DrugMatchConfigurationException;
+	List<ConceptSearchResultDescriptor> getDoseFormExactNationalPreferredTermMatch(String query) throws DrugMatchConfigurationException, IOException;
 
-	List<ConceptSearchResultDescriptor> getSubstanceExactEnglishPreferredTermMatch(String query) throws IOException, DrugMatchConfigurationException;
+	List<ConceptSearchResultDescriptor> getSubstanceExactEnglishPreferredTermMatch(String query) throws DrugMatchConfigurationException, IOException;
 
-	List<ConceptSearchResultDescriptor> getSubstanceExactNationalPreferredTermMatch(String query) throws IOException, DrugMatchConfigurationException;
+	List<ConceptSearchResultDescriptor> getSubstanceExactNationalPreferredTermMatch(String query) throws DrugMatchConfigurationException, IOException;
 
-	List<ConceptSearchResultDescriptor> getUnitExactEnglishPreferredTermMatch(String query) throws IOException, DrugMatchConfigurationException;
+	List<ConceptSearchResultDescriptor> getUnitExactEnglishPreferredTermMatch(String query) throws DrugMatchConfigurationException, IOException;
 
-	List<ConceptSearchResultDescriptor> getUnitExactNationalPreferredTermMatch(String query) throws IOException, DrugMatchConfigurationException;
+	List<ConceptSearchResultDescriptor> getUnitExactNationalPreferredTermMatch(String query) throws DrugMatchConfigurationException, IOException;
 }

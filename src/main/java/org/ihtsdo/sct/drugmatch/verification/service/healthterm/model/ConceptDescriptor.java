@@ -7,7 +7,6 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 /**
  * @author dev-team@carecom.dk
- *
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ConceptDescriptor implements Serializable {
@@ -19,7 +18,7 @@ public class ConceptDescriptor implements Serializable {
 	public List<DescriptionDescriptor> descriptionDescriptor;
 
 	@Override
-	public boolean equals(Object obj) {
+	public final boolean equals(final Object obj) {
 		if (this == obj) {
 			return true;
 		}
@@ -41,13 +40,13 @@ public class ConceptDescriptor implements Serializable {
 	}
 
 	@Override
-	public int hashCode() {
+	public final int hashCode() {
 		final int prime = 31;
 		return prime + ((this.id == null) ? 0 : this.id.hashCode());
 	}
 
 	@Override
-	public String toString() {
+	public final String toString() {
 		return new StringBuilder(ConceptDescriptor.class.getSimpleName())
 			.append(" [id=").append(this.id)
 			.append(", hierarchy=").append(this.hierarchy)

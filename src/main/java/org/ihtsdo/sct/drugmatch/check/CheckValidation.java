@@ -3,10 +3,8 @@ package org.ihtsdo.sct.drugmatch.check;
 import org.ihtsdo.sct.drugmatch.verification.service.healthterm.model.ConceptSearchResultDescriptor;
 
 /**
- * "Check" validation
- * 
+ * "Check" validation.
  * @author dev-team@carecom.dk
- *
  */
 public interface CheckValidation {
 
@@ -20,7 +18,7 @@ public interface CheckValidation {
 
 	/**
 	 * @param checkRule
-	 * @return custom violation message if available, otherwise toString from argument.
+	 * @return custom message if available, otherwise toString from argument.
 	 */
-	String getCheckRuleViolationMessage(CheckRule checkRule);
+	String getMessage(CheckRule checkRule);
 }

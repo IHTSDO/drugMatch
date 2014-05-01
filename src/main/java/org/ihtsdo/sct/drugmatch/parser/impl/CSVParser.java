@@ -1,14 +1,13 @@
-/**
- * 
- */
 package org.ihtsdo.sct.drugmatch.parser.impl;
 
 import java.io.File;
-import java.io.FileReader;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.codec.CharEncoding;
 import org.ihtsdo.sct.drugmatch.exception.DrugMatchConfigurationException;
 import org.ihtsdo.sct.drugmatch.model.Component;
 import org.ihtsdo.sct.drugmatch.model.ParsingResult;
@@ -22,16 +21,13 @@ import au.com.bytecode.opencsv.CSVReader;
 
 /**
  * @author dev-team@carecom.dk
- *
  */
 public class CSVParser implements Parser {
 
 	private static final Logger log = LoggerFactory.getLogger(CSVParser.class);
 
-	private final DrugMatchProperties drugMatchProperties = new DrugMatchProperties();
-
-	private File getInputFile() throws DrugMatchConfigurationException {
-		String inputFilePath = this.drugMatchProperties.getInputFilePath();
+	private static File getInputFile() throws DrugMatchConfigurationException {
+		String inputFilePath = DrugMatchProperties.getInputFilePath();
 		if (inputFilePath == null) {
 			throw new DrugMatchConfigurationException("Unable to proceed, cause: '" + DrugMatchProperties.INPUT_FILE + "' isn't set!");
 		}
@@ -47,8 +43,8 @@ public class CSVParser implements Parser {
 		return input;
 	}
 
-	private char getInputFileContentSeparator() {
-		String separatorSetting = this.drugMatchProperties.getFileContentSeparatorCharacter();
+	private static char getInputFileContentSeparator() throws DrugMatchConfigurationException {
+		String separatorSetting = DrugMatchProperties.getFileContentSeparatorCharacter();
 		if (separatorSetting == null) {
 			separatorSetting = ";";
 		}
@@ -61,8 +57,8 @@ public class CSVParser implements Parser {
 	 * @param index
 	 * @return trimmed value or <code>null</code> if missing or empty
 	 */
-	private static String extractValue(String[] strings,
-			int index) {
+	private static String extractValue(final String[] strings,
+			final int index) {
 		String value = strings[index];
 		if (value != null) {
 			value = value.trim();
@@ -73,24 +69,27 @@ public class CSVParser implements Parser {
 		return value;
 	}
 
-	public ParsingResult parse() throws DrugMatchConfigurationException, IOException {
+	public final ParsingResult parse() throws DrugMatchConfigurationException, IOException {
 		log.info("Starting input parsing");
 		CSVReader reader = null;
-		try {
+		try (
+				InputStreamReader inputReader = new InputStreamReader(new FileInputStream(getInputFile()),
+				CharEncoding.UTF_8);
+		) {
 			// initialize reader
-			String quoteCharacter = this.drugMatchProperties.getFileContentQuoteCharacter();
+			String quoteCharacter = DrugMatchProperties.getFileContentQuoteCharacter();
 			if (quoteCharacter == null) {
-				reader = new CSVReader(new FileReader(getInputFile()),
+				reader = new CSVReader(inputReader,
 						getInputFileContentSeparator());
 				log.info("Assuming unquoted input content");
 			} else {
-				reader = new CSVReader(new FileReader(getInputFile()),
+				reader = new CSVReader(inputReader,
 						getInputFileContentSeparator(),
 						quoteCharacter.charAt(0));
 				log.debug("Using '{}' = '{}'", DrugMatchProperties.INPUT_FILE_QUOTE_CHARACTER, quoteCharacter);
 			}
 			// 1st line
-			String includeFirstLine = this.drugMatchProperties.getInputFileIncludeFirstLine();
+			String includeFirstLine = DrugMatchProperties.getInputFileIncludeFirstLine();
 			int componentGroup = 0,
 				componentIndex,
 				lineNumber = 0;
@@ -104,17 +103,17 @@ public class CSVParser implements Parser {
 			String[] columns;
 			String drugId,
 				tradeName,
-				doseForm,
-				
-				substanceName_en,
-				substanceName_national,
+				doseFormEnglish,
+				doseFormNational,
+				substanceNameEnglish,
+				substanceNameNational,
 				strength,
 				unit;
 			Pharmaceutical pharmaceutical;
 			List<Component> malformedComponents;
 			while ((columns = reader.readNext()) != null) {
 				lineNumber++;
-				if (columns.length >= 6) { // ie. minimum 1 pharmaceutical with 1 component
+				if (columns.length >= 7) { // ie. minimum 1 pharmaceutical with 1 component
 					// pharmaceutical
 					drugId = extractValue(columns, 0);
 					if (drugId == null) {
@@ -126,32 +125,38 @@ public class CSVParser implements Parser {
 						log.warn("SKIPPING LINE: {} CAUSE: empty tradeName!", lineNumber);
 						continue;
 					} // else
-					doseForm = extractValue(columns, 2);
-					if (doseForm == null) {
-						log.warn("SKIPPING LINE: {} CAUSE: empty doseForm!", lineNumber);
+					doseFormEnglish = extractValue(columns, 2);
+					if (doseFormEnglish == null) {
+						log.warn("SKIPPING LINE: {} CAUSE: empty doseFormEnglish!", lineNumber);
+						continue;
+					} // else
+					doseFormNational = extractValue(columns, 3);
+					if (doseFormNational == null) {
+						log.warn("SKIPPING LINE: {} CAUSE: empty doseFormNational!", lineNumber);
 						continue;
 					} // else
 					pharmaceutical = new Pharmaceutical(new ArrayList<Component>(),
-							doseForm,
+							doseFormEnglish,
+							doseFormNational,
 							drugId,
 							tradeName);
 					// components
-					componentIndex = 3;
+					componentIndex = 4;
 					malformedComponents = new ArrayList<>();
 					while ((componentIndex + 4) <= columns.length) {
 						componentGroup++;
-						substanceName_en = extractValue(columns, (componentIndex));
-						substanceName_national = extractValue(columns, (componentIndex + 1));
+						substanceNameEnglish = extractValue(columns, (componentIndex));
+						substanceNameNational = extractValue(columns, (componentIndex + 1));
 						strength = extractValue(columns, (componentIndex + 2));
 						unit = extractValue(columns, (componentIndex + 3));
-						if (substanceName_en == null
-								&& substanceName_national == null
+						if (substanceNameEnglish == null
+								&& substanceNameNational == null
 								&& strength == null
 								&& unit == null) {
 							log.debug("Skipping component group {}, cause: all columns in group are empty.", componentGroup);
 						} else {
-							if (substanceName_en == null
-									|| substanceName_national == null
+							if (substanceNameEnglish == null
+									|| substanceNameNational == null
 									|| strength == null
 									|| unit == null) {
 								// using raw values on purpose, to support debugging!
@@ -160,8 +165,8 @@ public class CSVParser implements Parser {
 										columns[componentIndex + 2],
 										columns[componentIndex + 3]));
 							} else {
-								pharmaceutical.components.add(new Component(substanceName_en,
-										substanceName_national,
+								pharmaceutical.components.add(new Component(substanceNameEnglish,
+										substanceNameNational,
 										strength,
 										unit));
 							}

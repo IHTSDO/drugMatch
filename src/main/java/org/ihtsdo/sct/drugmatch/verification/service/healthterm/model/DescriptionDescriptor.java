@@ -6,7 +6,6 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 /**
  * @author dev-team@carecom.dk
- *
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class DescriptionDescriptor implements Serializable {
@@ -19,7 +18,7 @@ public class DescriptionDescriptor implements Serializable {
 			descriptionType;
 
 	@Override
-	public boolean equals(Object obj) {
+	public final boolean equals(final Object obj) {
 		if (this == obj) {
 			return true;
 		}
@@ -43,7 +42,7 @@ public class DescriptionDescriptor implements Serializable {
 	/**
 	 * @return extract extension namespace ID, if present, otherwise null.
 	 */
-	public String getNamespaceId() {
+	public final String getNamespaceId() {
 		if (this.descriptionId == null) {
 			return null;
 		} // else
@@ -57,13 +56,13 @@ public class DescriptionDescriptor implements Serializable {
 	}
 
 	@Override
-	public int hashCode() {
+	public final int hashCode() {
 		final int prime = 31;
 		return prime + ((this.descriptionId == null) ? 0 : this.descriptionId.hashCode());
 	}
 
 	@Override
-	public String toString() {
+	public final String toString() {
 		return new StringBuilder(DescriptionDescriptor.class.getSimpleName())
 			.append(" [descriptionLocale=").append(this.descriptionLocale)
 			.append(", descriptionTerm=").append(this.descriptionTerm)

@@ -2,7 +2,6 @@ package org.ihtsdo.sct.drugmatch.check;
 
 /**
  * @author dev-team@carecom.dk
- * 
  */
 public enum CheckRule {
 

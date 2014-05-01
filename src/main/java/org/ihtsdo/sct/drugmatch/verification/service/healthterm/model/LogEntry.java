@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.ihtsdo.sct.drugmatch.verification.service.healthterm.model;
 
 import java.io.Serializable;
@@ -9,7 +6,6 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 /**
  * @author dev-team@carecom.dk
- *
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class LogEntry implements Serializable {
@@ -20,7 +16,7 @@ public class LogEntry implements Serializable {
 		value;
 
 	@Override
-	public boolean equals(Object obj) {
+	public final boolean equals(final Object obj) {
 		if (this == obj) {
 			return true;
 		}
@@ -63,7 +59,7 @@ public class LogEntry implements Serializable {
 	}
 
 	@Override
-	public int hashCode() {
+	public final int hashCode() {
 		final int prime = 31;
 		int result = prime + ((this.cause == null) ? 0 : this.cause.hashCode());
 		result = prime * result + ((this.code == null) ? 0 : this.code.hashCode());
@@ -72,7 +68,7 @@ public class LogEntry implements Serializable {
 	}
 
 	@Override
-	public String toString() {
+	public final String toString() {
 		return new StringBuilder(LogEntry.class.getSimpleName())
 			.append(" [level=").append(this.level)
 			.append(", code=").append(this.code)

@@ -2,6 +2,7 @@ package org.ihtsdo.sct.drugmatch.check.extension.danish;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 import org.ihtsdo.sct.drugmatch.check.CheckRule;
@@ -9,7 +10,7 @@ import org.ihtsdo.sct.drugmatch.check.CheckValidation;
 import org.ihtsdo.sct.drugmatch.verification.service.healthterm.model.ConceptSearchResultDescriptor;
 
 /**
- * Danish "Check" validation
+ * Danish "Check" validation.
  * <p>
  * "Rules for check of:"
  * <ul>
@@ -18,19 +19,17 @@ import org.ihtsdo.sct.drugmatch.verification.service.healthterm.model.ConceptSea
  * <li>Unit</li>
  * </ul>
  * <p>
- * 
  * @author dev-team@carecom.dk
  * @see "Rules for substances dose form units and product generics.docx"
  * @see mail "Checks, Kell Greibe [keg@ssi.dk], Thursday, April 03, 2014 13:32"
  */
-public class CheckValidationImpl implements CheckValidation {
+public class CheckValidationDanishImpl implements CheckValidation {
 
 	/**
 	 * Mapping between generic Check and Danish Check violation messages.
-	 * 
 	 * @see "Rules for substances dose form units and product generics.docx"
 	 */
-	private static final Map<CheckRule, String> checkRule2ViolationMessage;
+	private static final Map<CheckRule, String> CHECK_RULE_2_VIOLATION_MESSAGE;
 
 	static {
 		Map<CheckRule, String> tmpResult = new HashMap<>();
@@ -40,20 +39,26 @@ public class CheckValidationImpl implements CheckValidation {
 		tmpResult.put(CheckRule.INFLECTION_MATCH, "Inflection error");
 		tmpResult.put(CheckRule.TRANSLATION_MISSING, "Translation missing");
 		tmpResult.put(CheckRule.ZERO_MATCH, "Missing");
-		checkRule2ViolationMessage = Collections.unmodifiableMap(tmpResult);
+		CHECK_RULE_2_VIOLATION_MESSAGE = Collections.unmodifiableMap(tmpResult);
 	}
 
-	public CheckRule getRule(String componentName,
-			ConceptSearchResultDescriptor conceptSearchResultDescriptor) {
+	/**
+	 * {@inheritDoc}
+	 */
+	public final CheckRule getRule(final String componentName,
+			final ConceptSearchResultDescriptor conceptSearchResultDescriptor) {
 		String term = conceptSearchResultDescriptor.descriptionTerm;
-		if (term.toLowerCase().equals(term)) {
+		if (term.toLowerCase(Locale.ENGLISH).equals(term)) {
 			return CheckRule.EXACT_MATCH;
 		} // else
 		return CheckRule.CASE_INSENSITIVE_MATCH;
 	}
 
-	public String getCheckRuleViolationMessage(CheckRule checkRule) {
-		String violationMessage = checkRule2ViolationMessage.get(checkRule);
+	/**
+	 * {@inheritDoc}
+	 */
+	public final String getMessage(final CheckRule checkRule) {
+		String violationMessage = CHECK_RULE_2_VIOLATION_MESSAGE.get(checkRule);
 		return (violationMessage == null) ? checkRule.toString() : violationMessage;
 	}
 }

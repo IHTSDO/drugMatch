@@ -6,7 +6,6 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 /**
  * @author dev-team@carecom.dk
- *
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ConceptSearchResultDescriptor implements Serializable {
@@ -19,7 +18,7 @@ public class ConceptSearchResultDescriptor implements Serializable {
 			descriptionType;
 
 	@Override
-	public boolean equals(Object obj) {
+	public final boolean equals(final Object obj) {
 		if (this == obj) {
 			return true;
 		}
@@ -49,14 +48,14 @@ public class ConceptSearchResultDescriptor implements Serializable {
 	}
 
 	@Override
-	public int hashCode() {
+	public final int hashCode() {
 		final int prime = 31;
 		int result = prime + ((this.healthtermConceptId == null) ? 0 : this.healthtermConceptId.hashCode());
 		return prime * result + ((this.healthtermDescriptionId == null) ? 0 : this.healthtermDescriptionId.hashCode());
 	}
 
 	@Override
-	public String toString() {
+	public final String toString() {
 		return new StringBuilder(ConceptSearchResultDescriptor.class.getSimpleName())
 			.append(" [conceptCode=").append(this.conceptCode)
 			.append(", descriptionTerm=").append(this.descriptionTerm)
