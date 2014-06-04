@@ -19,23 +19,30 @@ public final class DrugMatchProperties {
 	private static final Logger log = LoggerFactory.getLogger(DrugMatchProperties.class);
 
 	public static final String
-			ATTRIBUTE_ID_HAS_ACTIVE_INGREDIENT = "attribute_id.has_active_ingredient",
-			ATTRIBUTE_ID_HAS_DOSE_FORM = "attribute_id.has_dose_form",
+			ATTRIBUTE_ID_HAS_ACTIVE_INGREDIENT = "sct.attribute_id.has_active_ingredient",
+			ATTRIBUTE_ID_HAS_DOSE_FORM = "sct.attribute_id.has_dose_form",
 
-			CONSTRAINT_ID_DOSE_FORM = "constraint_id.dose_form",
-			CONSTRAINT_ID_SUBSTANCE = "constraint_id.substance",
-			CONSTRAINT_ID_UNIT = "constraint_id.unit",
+			CONSTRAINT_ID_DOSE_FORM = "sct.constraint_id.dose_form",
+			CONSTRAINT_ID_SUBSTANCE = "sct.constraint_id.substance",
+			CONSTRAINT_ID_UNIT = "sct.constraint_id.unit",
 
 			GENERIC_REPORT = "generic_report",
 
-			FILE_CONTENT_SEPARATOR_CHARACTER = "file.content.separatorCharacter",
-			INPUT_FILE = "input.file",
-			INPUT_FILE_INCLUDE_FIRST_LINE = "input.file.includeFirstLine",
-			INPUT_FILE_QUOTE_CHARACTER = "file.content.quoteCharacter",
+			FILE_CONTENT_SEPARATOR_CHARACTER = "file.content.separator_character",
+			FILE_QUOTE_CHARACTER = "file.content.quote_character",
 
-			NATIONAL_NAMESPACE_ID = "national.namespace_id",
+			INPUT_FILE = "input.file",
+			INPUT_FILE_INCLUDE_FIRST_LINE = "input.file.include_first_line",
+
+			MODULE_ID = "sct.module_id",
+
+			EXTENSION_LANGUAGE_CODE = "sct.extension.language_code",
+			EXTENSION_NAMESPACE_ID = "sct.extension.namespace_id",
 
 			OUTPUT_DIR = "output.dir",
+
+			SCT_ID_SERVICE = "sct.id.service",
+			SCT_RELEASE_ID = "sct.release_id",
 
 			SETTING_FILE = "setting.file",
 
@@ -47,6 +54,9 @@ public final class DrugMatchProperties {
 
 	private static Properties properties;
 
+	/**
+	 * DON'T INSTANTIATE A STATIC HELPER!
+	 */
 	private DrugMatchProperties() {
 		throw new UnsupportedOperationException();
 	}
@@ -100,7 +110,7 @@ public final class DrugMatchProperties {
 	}
 
 	/**
-	 * Use generic messages in reports.
+	 * @return use generic messages in reports, otherwise false.
 	 * @throws DrugMatchConfigurationException
 	 */
 	public static boolean createGenericReport() throws DrugMatchConfigurationException {
@@ -168,7 +178,7 @@ public final class DrugMatchProperties {
 	}
 
 	public static String getFileContentQuoteCharacter() throws DrugMatchConfigurationException {
-		return getStringProperty(INPUT_FILE_QUOTE_CHARACTER);
+		return getStringProperty(FILE_QUOTE_CHARACTER);
 	}
 
 	public static String getFileContentSeparatorCharacter() throws DrugMatchConfigurationException {
@@ -183,12 +193,47 @@ public final class DrugMatchProperties {
 		return getStringProperty(INPUT_FILE_INCLUDE_FIRST_LINE);
 	}
 
-	public static String getNationalNamespaceId() throws DrugMatchConfigurationException {
-		return getStringProperty(NATIONAL_NAMESPACE_ID);
+	public static File getMappingDirectory() throws DrugMatchConfigurationException {
+		File mappingDir = new File(getOutputDirectory().getPath() + File.separator + "mapping");
+		if (!mappingDir.exists()) {
+			if (!mappingDir.mkdirs()) {
+				throw new DrugMatchConfigurationException("Unable to proceed, cause: '" + mappingDir + "' isn't writeable");
+			}
+			log.debug("Mapping directory: {} created", mappingDir);
+		}
+		if (!mappingDir.canWrite()) {
+			throw new DrugMatchConfigurationException("Unable to proceed, cause: '" + mappingDir + "' isn't writeable");
+		}
+		return mappingDir;
 	}
 
+	public static String getModuleId() throws DrugMatchConfigurationException {
+		return getStringProperty(MODULE_ID);
+	}
+
+	public static String getNationalLanguageCode() throws DrugMatchConfigurationException {
+		return getStringProperty(EXTENSION_LANGUAGE_CODE);
+	}
+
+	public static String getNationalNamespaceId() throws DrugMatchConfigurationException {
+		return getStringProperty(EXTENSION_NAMESPACE_ID);
+	}
+
+	/**
+	 * Note, trims trailing file separator from path
+	 * @return {@link File}
+	 * @throws DrugMatchConfigurationException
+	 */
 	public static File getOutputDirectory() throws DrugMatchConfigurationException {
-		File outputDir = new File(getStringProperty(OUTPUT_DIR));
+		String path = getStringProperty(OUTPUT_DIR);
+		if (path == null) {
+			throw new DrugMatchConfigurationException("Unable to proceed, cause: '" + DrugMatchProperties.OUTPUT_DIR + "' isn't set!");
+		} // else
+		// trim trailing file separator
+		if (path.endsWith(File.separator)) {
+			path = path.substring(0, (path.length() - 1));
+		}
+		File outputDir = new File(path);
 		if (!outputDir.exists()) {
 			if (!outputDir.mkdirs()) {
 				throw new DrugMatchConfigurationException("Unable to proceed, cause: '" + DrugMatchProperties.OUTPUT_DIR + "'='" + outputDir + "' isn't writeable");
@@ -199,6 +244,97 @@ public final class DrugMatchProperties {
 			throw new DrugMatchConfigurationException("Unable to proceed, cause: '" + DrugMatchProperties.OUTPUT_DIR + "'='" + outputDir + "' isn't writeable");
 		}
 		return outputDir;
+	}
+
+	public static File getReferenceSetDirectory() throws DrugMatchConfigurationException {
+		File refSetDir = new File(getReleaseFormat2Directory().getPath() + File.separator + "Refset");
+		if (!refSetDir.exists()) {
+			if (!refSetDir.mkdirs()) {
+				throw new DrugMatchConfigurationException("Unable to proceed, cause: '" + refSetDir + "' isn't writeable");
+			}
+			log.debug("Reference Set directory: {} created", refSetDir);
+		}
+		if (!refSetDir.canWrite()) {
+			throw new DrugMatchConfigurationException("Unable to proceed, cause: '" + refSetDir + "' isn't writeable");
+		}
+		return refSetDir;
+	}
+
+	public static File getReferenceSetLanguageDirectory() throws DrugMatchConfigurationException {
+		File refSetLanguageDir = new File(getReferenceSetDirectory().getPath() + File.separator + "Language");
+		if (!refSetLanguageDir.exists()) {
+			if (!refSetLanguageDir.mkdirs()) {
+				throw new DrugMatchConfigurationException("Unable to proceed, cause: '" + refSetLanguageDir + "' isn't writeable");
+			}
+			log.debug("Reference Set Language directory: {} created", refSetLanguageDir);
+		}
+		if (!refSetLanguageDir.canWrite()) {
+			throw new DrugMatchConfigurationException("Unable to proceed, cause: '" + refSetLanguageDir + "' isn't writeable");
+		}
+		return refSetLanguageDir;
+	}
+
+	public static File getReleaseFormat2Directory() throws DrugMatchConfigurationException {
+		File rf2Dir = new File(getOutputDirectory().getPath() + File.separator + "RF2");
+		if (!rf2Dir.exists()) {
+			if (!rf2Dir.mkdirs()) {
+				throw new DrugMatchConfigurationException("Unable to proceed, cause: '" + rf2Dir + "' isn't writeable");
+			}
+			log.debug("Release Format 2 directory: {} created", rf2Dir);
+		}
+		if (!rf2Dir.canWrite()) {
+			throw new DrugMatchConfigurationException("Unable to proceed, cause: '" + rf2Dir + "' isn't writeable");
+		}
+		return rf2Dir;
+	}
+
+	public static File getReportDirectory() throws DrugMatchConfigurationException {
+		File reportDir = new File(getOutputDirectory().getPath() + File.separator + "report");
+		if (!reportDir.exists()) {
+			if (!reportDir.mkdirs()) {
+				throw new DrugMatchConfigurationException("Unable to proceed, cause: '" + reportDir + "' isn't writeable");
+			}
+			log.debug("Report directory: {} created", reportDir);
+		}
+		if (!reportDir.canWrite()) {
+			throw new DrugMatchConfigurationException("Unable to proceed, cause: '" + reportDir + "' isn't writeable");
+		}
+		return reportDir;
+	}
+
+	/**
+	 * @return SNOMED CT ID service host URL, without trailing /.
+	 * @throws DrugMatchConfigurationException
+	 */
+	public static String getSctIdService() throws DrugMatchConfigurationException {
+		String s = getStringProperty(SCT_ID_SERVICE);
+		if (s != null
+				&& s.endsWith("/")) {
+			return s.substring(0, (s.length() - 1));
+		}
+		return s;
+	}
+
+	/**
+	 * @return SNOMED CT release ID
+	 * @throws DrugMatchConfigurationException
+	 */
+	public static String getSctReleaseId() throws DrugMatchConfigurationException {
+		return getStringProperty(SCT_RELEASE_ID);
+	}
+
+	public static File getTerminologyDirectory() throws DrugMatchConfigurationException {
+		File terminologyDir = new File(getReleaseFormat2Directory().getPath() + File.separator + "Terminology");
+		if (!terminologyDir.exists()) {
+			if (!terminologyDir.mkdirs()) {
+				throw new DrugMatchConfigurationException("Unable to proceed, cause: '" + terminologyDir + "' isn't writeable");
+			}
+			log.debug("Terminology directory: {} created", terminologyDir);
+		}
+		if (!terminologyDir.canWrite()) {
+			throw new DrugMatchConfigurationException("Unable to proceed, cause: '" + terminologyDir + "' isn't writeable");
+		}
+		return terminologyDir;
 	}
 
 	public static String getVerificationLogin() throws DrugMatchConfigurationException {

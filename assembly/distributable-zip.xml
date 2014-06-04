@@ -11,12 +11,8 @@
 		<fileSet>
 			<directory>${project.basedir}</directory>
 			<includes>
-				<include>check.bat</include>
-				<include>check.sh</include>
 				<include>LICENSE</include>
 				<include>README.md</include>
-				<include>run.bat</include>
-				<include>run.sh</include>
 			</includes>
 			<outputDirectory>/</outputDirectory>
 		</fileSet>
@@ -25,6 +21,18 @@
 			<includes>
 				<include>log4j.xml</include>
 				<include>setting.properties</include>
+			</includes>
+			<outputDirectory>/</outputDirectory>
+		</fileSet>
+		<fileSet>
+			<directory>${project.basedir}/src/main/resource/executable</directory>
+			<includes>
+				<include>check.bat</include>
+				<include>check.sh</include>
+				<include>match.bat</include>
+				<include>match.sh</include>
+				<include>run.bat</include>
+				<include>run.sh</include>
 			</includes>
 			<outputDirectory>/</outputDirectory>
 		</fileSet>

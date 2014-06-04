@@ -4,22 +4,26 @@
 	"http://www.puppycrawl.com/dtds/suppressions_1_1.dtd">
 <suppressions>
 
-	<suppress files="."
-		checks="AvoidInlineConditionals"/>
+	<!-- exclude auto-generated SCT ID service -->
+	<suppress checks="."
+		files="org[\\/]ihtsdo[\\/]sct[\\/]id[\\/]service" />
 
-	<suppress files="."
-		checks="FileTabCharacter"/>
+	<suppress checks="AvoidInlineConditionals"
+		files="." />
 
-	<suppress files="."
-		checks="LineLength"/>
+	<suppress checks="FileTabCharacter"
+		files="." />
 
-	<suppress files=".*(?:Test)\.java$"
-		checks="MagicNumber"/>
+	<suppress checks="LineLength"
+		files="." />
 
-	<suppress files="."
-		checks="PackageAnnotation"/>
+	<suppress checks="MagicNumber"
+		files=".*(?:Test)\.java$" />
 
-	<suppress files="."
-		checks="VisibilityModifier"/>
+	<suppress checks="PackageAnnotation"
+		files="." />
+
+	<suppress checks="VisibilityModifier"
+		files="." />
 
 </suppressions>

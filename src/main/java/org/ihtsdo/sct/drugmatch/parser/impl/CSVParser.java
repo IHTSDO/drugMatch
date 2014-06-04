@@ -9,8 +9,8 @@ import java.util.List;
 
 import org.apache.commons.codec.CharEncoding;
 import org.ihtsdo.sct.drugmatch.exception.DrugMatchConfigurationException;
+import org.ihtsdo.sct.drugmatch.exception.DrugMatchStrictModeViolationException;
 import org.ihtsdo.sct.drugmatch.model.Component;
-import org.ihtsdo.sct.drugmatch.model.ParsingResult;
 import org.ihtsdo.sct.drugmatch.model.Pharmaceutical;
 import org.ihtsdo.sct.drugmatch.parser.Parser;
 import org.ihtsdo.sct.drugmatch.properties.DrugMatchProperties;
@@ -26,6 +26,10 @@ public class CSVParser implements Parser {
 
 	private static final Logger log = LoggerFactory.getLogger(CSVParser.class);
 
+	/**
+	 * @return input file.
+	 * @throws DrugMatchConfigurationException
+	 */
 	private static File getInputFile() throws DrugMatchConfigurationException {
 		String inputFilePath = DrugMatchProperties.getInputFilePath();
 		if (inputFilePath == null) {
@@ -43,6 +47,10 @@ public class CSVParser implements Parser {
 		return input;
 	}
 
+	/**
+	 * @return Input file content separator.
+	 * @throws DrugMatchConfigurationException
+	 */
 	private static char getInputFileContentSeparator() throws DrugMatchConfigurationException {
 		String separatorSetting = DrugMatchProperties.getFileContentSeparatorCharacter();
 		if (separatorSetting == null) {
@@ -69,7 +77,10 @@ public class CSVParser implements Parser {
 		return value;
 	}
 
-	public final ParsingResult parse() throws DrugMatchConfigurationException, IOException {
+	/**
+	 * {@inheritDoc}
+	 */
+	public final List<Pharmaceutical> parse() throws DrugMatchConfigurationException, DrugMatchStrictModeViolationException, IOException {
 		log.info("Starting input parsing");
 		CSVReader reader = null;
 		try (
@@ -86,15 +97,13 @@ public class CSVParser implements Parser {
 				reader = new CSVReader(inputReader,
 						getInputFileContentSeparator(),
 						quoteCharacter.charAt(0));
-				log.debug("Using '{}' = '{}'", DrugMatchProperties.INPUT_FILE_QUOTE_CHARACTER, quoteCharacter);
+				log.debug("Using '{}' = '{}'", DrugMatchProperties.FILE_QUOTE_CHARACTER, quoteCharacter);
 			}
 			// 1st line
-			String includeFirstLine = DrugMatchProperties.getInputFileIncludeFirstLine();
 			int componentGroup = 0,
 				componentIndex,
 				lineNumber = 0;
-			if (includeFirstLine == null
-					|| !Boolean.parseBoolean(includeFirstLine)) {
+			if (!Boolean.parseBoolean(DrugMatchProperties.getInputFileIncludeFirstLine())) {
 				reader.readNext();
 				lineNumber++;
 			}
@@ -117,22 +126,28 @@ public class CSVParser implements Parser {
 					// pharmaceutical
 					drugId = extractValue(columns, 0);
 					if (drugId == null) {
-						log.warn("SKIPPING LINE: {} CAUSE: empty drugId!", lineNumber);
+						log.warn("SKIPPING LINE: {} CAUSE: empty drugId!", String.valueOf(lineNumber));
 						continue;
 					} // else
 					tradeName = extractValue(columns, 1);
 					if (tradeName == null) {
-						log.warn("SKIPPING LINE: {} CAUSE: empty tradeName!", lineNumber);
+						log.warn("SKIPPING LINE: {}, drug ID: {} CAUSE: empty tradeName!",
+								String.valueOf(lineNumber),
+								drugId);
 						continue;
 					} // else
 					doseFormEnglish = extractValue(columns, 2);
 					if (doseFormEnglish == null) {
-						log.warn("SKIPPING LINE: {} CAUSE: empty doseFormEnglish!", lineNumber);
+						log.warn("SKIPPING LINE: {}, drug ID: {} CAUSE: empty doseFormEnglish!",
+								String.valueOf(lineNumber),
+								drugId);
 						continue;
 					} // else
 					doseFormNational = extractValue(columns, 3);
 					if (doseFormNational == null) {
-						log.warn("SKIPPING LINE: {} CAUSE: empty doseFormNational!", lineNumber);
+						log.warn("SKIPPING LINE: {}, drug ID: {} CAUSE: empty doseFormNational!",
+								String.valueOf(lineNumber),
+								drugId);
 						continue;
 					} // else
 					pharmaceutical = new Pharmaceutical(new ArrayList<Component>(),
@@ -153,7 +168,10 @@ public class CSVParser implements Parser {
 								&& substanceNameNational == null
 								&& strength == null
 								&& unit == null) {
-							log.debug("Skipping component group {}, cause: all columns in group are empty.", componentGroup);
+							log.debug("Skipping component group: {} in line: {}, drug ID: {} cause: all columns in component group are empty.",
+									String.valueOf(componentGroup),
+									String.valueOf(lineNumber),
+									drugId);
 						} else {
 							if (substanceNameEnglish == null
 									|| substanceNameNational == null
@@ -177,17 +195,26 @@ public class CSVParser implements Parser {
 						pharmaceuticals.add(pharmaceutical);
 					} else {
 						log.warn("SKIPPING LINE: {}, drug ID: {} CAUSE: {} component(s) is malformed! {}",
-								lineNumber,
+								String.valueOf(lineNumber),
 								drugId,
-								malformedComponents.size(),
+								String.valueOf(malformedComponents.size()),
 								malformedComponents);
 					}
 				} else {
-					log.warn("SKIPPING LINE: {} CAUSE: insufficient data (less than 6 columns)!", lineNumber);
+					log.warn("SKIPPING LINE: {} CAUSE: insufficient data (less than 6 columns)!", String.valueOf(lineNumber));
 				}
 			}
 			log.info("Completed input parsing");
-			return new ParsingResult(lineNumber, pharmaceuticals);
+			// strict mode check
+			if (DrugMatchProperties.isStrictMode()) {
+				int parseCount = (Boolean.parseBoolean(DrugMatchProperties.getInputFileIncludeFirstLine())) ? lineNumber : (lineNumber - 1);
+				if (parseCount != pharmaceuticals.size()) {
+					throw new DrugMatchStrictModeViolationException("FLOW ABORTED, CAUSE: STRICT MODE, VIOLATION(S) DETECTED DURING PARSING: " +
+						parseCount +" PARSED " +
+						pharmaceuticals.size() + " VALID!");
+				}
+			} // else
+			return pharmaceuticals;
 		} finally {
 			if (reader != null) {
 				reader.close();

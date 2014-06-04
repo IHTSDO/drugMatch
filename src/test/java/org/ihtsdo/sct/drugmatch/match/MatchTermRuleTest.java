@@ -1,5 +1,6 @@
 package org.ihtsdo.sct.drugmatch.match;
 
+import java.util.Locale;
 import java.util.SortedMap;
 import java.util.SortedSet;
 import java.util.TreeMap;
@@ -14,14 +15,30 @@ import org.junit.Test;
 public class MatchTermRuleTest {
 
 	@Test
+	public final void isGeneric() {
+		SortedSet<MatchTermRule> offenders = new TreeSet<>();
+		for (MatchTermRule rule : MatchTermRule.values()) {
+			if (rule.toString().toUpperCase(Locale.ENGLISH).contains("PHARMACEUTICAL")
+					&& rule.isGeneric()) {
+				offenders.add(rule);
+			}
+		}
+		if (offenders.size() > 0) {
+			StringBuilder msg = new StringBuilder("Unexpected generic rule(s): ");
+			msg.append(offenders.toString());
+			Assert.fail(msg.toString());
+		}
+	}
+
+	@Test
 	public final void uniqueWeights() {
 		SortedMap<Integer, SortedSet<MatchTermRule>> weight2Rules = new TreeMap<>();
 		SortedSet<MatchTermRule> rules;
 		for (MatchTermRule rule : MatchTermRule.values()) {
-			rules = weight2Rules.get(rule.getWeight());
+			rules = weight2Rules.get(Integer.valueOf(rule.getWeight()));
 			if (rules == null) {
 				rules = new TreeSet<>();
-				weight2Rules.put(rule.getWeight(), rules);
+				weight2Rules.put(Integer.valueOf(rule.getWeight()), rules);
 			}
 			rules.add(rule);
 		}

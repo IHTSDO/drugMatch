@@ -2,6 +2,8 @@ package org.ihtsdo.sct.drugmatch.model;
 
 import java.io.Serializable;
 
+import org.apache.commons.lang3.StringUtils;
+
 /**
  * @author dev-team@carecom.dk
  */
@@ -55,6 +57,20 @@ public class Substance implements Comparable<Substance>, Serializable {
 			return false;
 		}
 		return true;
+	}
+
+	/**
+	 * @return whitespace normalized {@link Substance#nameEnglish}
+	 */
+	public final String getNormalizedNameEnglish() {
+		return StringUtils.normalizeSpace(this.nameEnglish);
+	}
+
+	/**
+	 * @return whitespace normalized {@link Substance#nameNational}
+	 */
+	public final String getNormalizedNameNational() {
+		return StringUtils.normalizeSpace(this.nameNational);
 	}
 
 	@Override

@@ -13,6 +13,9 @@ public final class CheckValidationHelper {
 
 	private static final Logger log = LoggerFactory.getLogger(CheckValidationHelper.class);
 
+	/**
+	 * DON'T INSTANTIATE A STATIC HELPER!
+	 */
 	private CheckValidationHelper() {
 		throw new UnsupportedOperationException();
 	}

@@ -2,6 +2,8 @@ package org.ihtsdo.sct.drugmatch.verification.service.healthterm.model;
 
 import java.io.Serializable;
 
+import org.ihtsdo.sct.drugmatch.util.ComponentIdHelper;
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 /**
@@ -40,19 +42,11 @@ public class DescriptionDescriptor implements Serializable {
 	}
 
 	/**
-	 * @return extract extension namespace ID, if present, otherwise null.
+	 * @return namespace ID, if present, otherwise null.
+	 * @see {@link ComponentIdHelper#getNamespaceId(String)}
 	 */
 	public final String getNamespaceId() {
-		if (this.descriptionId == null) {
-			return null;
-		} // else
-		String id = this.descriptionId.toString();
-		if (id.length() > 10) { // assuming extension ID
-			int start = ((id.length() - 4) - 7) + 1;
-			int end = start + 7;
-			return id.substring(start, end);
-		}
-		return null;
+		return (this.descriptionId == null) ? null : ComponentIdHelper.getNamespaceId(this.descriptionId.toString());
 	}
 
 	@Override

@@ -1,7 +1,7 @@
-package org.ihtsdo.sct.drugmatch.enumeration;
+package org.ihtsdo.sct.drugmatch.constant.rf1;
 
 /**
- * SNOMED CT Description types.
+ * SNOMED CT Release Format 1 Description types.
  * @author dev-team@carecom.dk
  */
 public enum DescriptionType {

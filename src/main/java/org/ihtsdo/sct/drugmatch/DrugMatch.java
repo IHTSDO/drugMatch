@@ -5,17 +5,20 @@ import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
 
 import org.ihtsdo.sct.drugmatch.check.Check;
-import org.ihtsdo.sct.drugmatch.enumeration.ReturnCode;
+import org.ihtsdo.sct.drugmatch.constant.ReturnCode;
+import org.ihtsdo.sct.drugmatch.create.Create;
 import org.ihtsdo.sct.drugmatch.exception.DrugMatchConfigurationException;
-import org.ihtsdo.sct.drugmatch.exception.DrugMatchInputParsingException;
+import org.ihtsdo.sct.drugmatch.exception.DrugMatchStrictModeViolationException;
+import org.ihtsdo.sct.drugmatch.id.service.impl.IdServiceImpl;
 import org.ihtsdo.sct.drugmatch.match.Match;
-import org.ihtsdo.sct.drugmatch.model.ParsingResult;
+import org.ihtsdo.sct.drugmatch.model.Pharmaceutical;
 import org.ihtsdo.sct.drugmatch.parser.impl.CSVParser;
-import org.ihtsdo.sct.drugmatch.properties.DrugMatchProperties;
-import org.ihtsdo.sct.drugmatch.verification.service.VerificationService;
 import org.ihtsdo.sct.drugmatch.verification.service.healthterm.impl.VerificationServiceImpl;
+import org.ihtsdo.sct.id.service.CreateConceptIdsFaultException;
+import org.ihtsdo.sct.id.service.CreateSCTIDFaultException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,6 +42,9 @@ public class DrugMatch {
 	@Parameter(names = { "--matchAttributeReport" }, description = "Generate separate \"Match\" attribute report", hidden = true)
 	private boolean matchAttributeReport = false;
 
+	/**
+	 * YYYY-MM-DD HH.MM.SS.
+	 */
 	private final String isoNow;
 
 	public DrugMatch() {
@@ -46,38 +52,46 @@ public class DrugMatch {
 		this.isoNow = new SimpleDateFormat("yyyy-MM-dd HH.mm.ss").format(new Date());
 	}
 
-	public final void execute() throws DrugMatchConfigurationException, DrugMatchInputParsingException, IOException, KeyManagementException, NoSuchAlgorithmException {
+	/**
+	 * Execute DrugMatch flow.
+	 * @throws CreateConceptIdsFaultException
+	 * @throws CreateSCTIDFaultException
+	 * @throws DrugMatchConfigurationException
+	 * @throws DrugMatchStrictModeViolationException
+	 * @throws IOException
+	 * @throws KeyManagementException
+	 * @throws NoSuchAlgorithmException
+	 */
+	public final void execute() throws CreateConceptIdsFaultException, CreateSCTIDFaultException, DrugMatchConfigurationException, DrugMatchStrictModeViolationException, IOException, KeyManagementException, NoSuchAlgorithmException {
 		log.info("Starting DrugMatch flow");
-		ParsingResult parsingResult = new CSVParser().parse();
-		// strict mode check
-		if (DrugMatchProperties.isStrictMode()
-				&& parsingResult.parseCount != parsingResult.pharmaceuticals.size()) {
-			throw new DrugMatchInputParsingException("FLOW ABORTED, CAUSE: STRICT MODE, WARNINGS DETECTED DURING PARSING: " +
-				parsingResult.parseCount +" PARSED " +
-				parsingResult.pharmaceuticals.size() + " VALID!");
-		} // else
-		// determine flow scope
-		this.match = (!this.check || this.match);
-		// start flow
-// TODO strict mode check
-		VerificationService verificationService = new VerificationServiceImpl();
-		if (this.match) {
-			// match
-			Match m = new Match(parsingResult.pharmaceuticals,
+		List<Pharmaceutical> pharmaceuticals = new CSVParser().parse();
+		if (this.check) {
+			// "Check"
+			Check c = new Check(pharmaceuticals,
 					this.isoNow,
-					verificationService);
+					new VerificationServiceImpl());
+			c.execute();
+		} else if (this.match) {
+			// "Match"
+			Match m = new Match(pharmaceuticals,
+					this.isoNow,
+					new VerificationServiceImpl());
 			m.execute(this.matchAttributeReport);
 		} else {
-			// check
-			Check c = new Check(parsingResult.pharmaceuticals,
+			// "Create"
+			Create create = new Create(pharmaceuticals,
+					new IdServiceImpl(),
 					this.isoNow,
-					verificationService);
-			c.execute();
+					new VerificationServiceImpl());
+			create.execute(this.matchAttributeReport);
 		}
-		// create
 		log.info("Completed DrugMatch flow");
 	}
 
+	/**
+	 * DrugMatch main.
+	 * @param args
+	 */
 	public static void main(final String[] args) {
 		JCommander jc = new JCommander();
 		try {
@@ -85,10 +99,10 @@ public class DrugMatch {
 			jc.addObject(dm);
 			jc.parse(args);
 			dm.execute();
-		} catch (DrugMatchInputParsingException e) {
+		} catch (DrugMatchStrictModeViolationException e) {
 			log.error(e.getMessage());
-			System.exit(ReturnCode.INPUT_PARSE_ERROR.getValue());
-		} catch (DrugMatchConfigurationException | IOException e) {
+			System.exit(ReturnCode.STRICT_MODE_VIOLATION.getValue());
+		} catch (DrugMatchConfigurationException e) {
 			log.error(e.getMessage());
 			System.exit(ReturnCode.CONFIGURATION_ERROR.getValue());
 		} catch (ParameterException e) {
@@ -96,7 +110,8 @@ public class DrugMatch {
 			jc.usage();
 			System.exit(ReturnCode.GENERAL_EXCEPTION.getValue());
 		} catch (Exception e) {
-			log.error("Error encountered", e);
+			log.error("Error encountered", e.getMessage());
+			log.debug("Error encountered", e);
 			System.exit(ReturnCode.GENERAL_EXCEPTION.getValue());
 		}
 	}

@@ -1,9 +1,17 @@
 package org.ihtsdo.sct.drugmatch.model;
 
 import java.io.Serializable;
+import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
+import java.util.UUID;
 
+import org.apache.commons.codec.CharEncoding;
 import org.apache.commons.lang3.StringUtils;
+import org.ihtsdo.sct.drugmatch.constant.Constant;
 
 /**
  * @author dev-team@carecom.dk
@@ -33,6 +41,7 @@ public class Pharmaceutical implements Serializable {
 	/**
 	 * @param components
 	 * @param doseFormEnglish
+	 * @param doseFormNational
 	 * @param drugId
 	 * @param tradeName
 	 */
@@ -91,12 +100,16 @@ public class Pharmaceutical implements Serializable {
 		return true;
 	}
 
+	/**
+	 * Ex. "Azathioprine 120 mg + codeine phosphate 12 mg oral dosage form"
+	 * @return Generic English term
+	 */
 	public final String getEnglishTerm() {
 		StringBuilder term = new StringBuilder();
 		int i = 0,
 			l = this.components.size() - 1;
 		for (Component component : this.components) {
-			term.append((i > 0) ? StringUtils.uncapitalize(component.getEnglish()) : component.getEnglish());
+			term.append((i > 0) ? StringUtils.uncapitalize(component.getEnglish()) : StringUtils.capitalize(component.getEnglish()));
 			if (l > 0) {
 				term.append(" + ");
 			}
@@ -104,16 +117,32 @@ public class Pharmaceutical implements Serializable {
 			l--;
 		}
 		term.append(" ");
-		term.append(StringUtils.uncapitalize(this.doseForm.nameEnglish));
+		term.append(StringUtils.uncapitalize(this.doseForm.getNormalizedNameEnglish()));
 		return term.toString();
 	}
 
+	/**
+	 * Generate repeatable {@link UUID} based on English {@link Pharmaceutical#components} & English {@link Pharmaceutical#doseForm}.
+	 * @return {@link UUID} v3
+	 * @throws UnsupportedEncodingException
+	 * @see {@link #nameUUIDFromList(List)}
+	 */
+	public final UUID getGenericUUID() throws UnsupportedEncodingException {
+		// ensure whitespace doesn't affect resulting hash
+		return nameUUIDFromList(Arrays.asList(getEnglishTerm().split(Constant.REGEX_WHITESPACE_GREEDY)));
+	}
+
+	/**
+	 * Generate national term.<br>
+	 * Ex. "Paracetamol 120 mg + codeinphosphat 12 mg oral doseringsform"
+	 * @return {@link #components} {@link #doseForm}
+	 */
 	public final String getNationalTerm() {
 		StringBuilder term = new StringBuilder();
 		int i = 0,
 			l = this.components.size() - 1;
 		for (Component component : this.components) {
-			term.append((i > 0) ? StringUtils.uncapitalize(component.getNational()) : component.getNational());
+			term.append((i > 0) ? StringUtils.uncapitalize(component.getNational()) : StringUtils.capitalize(component.getNational()));
 			if (l > 0) {
 				term.append(" + ");
 			}
@@ -121,8 +150,42 @@ public class Pharmaceutical implements Serializable {
 			l--;
 		}
 		term.append(" ");
-		term.append(StringUtils.uncapitalize(this.doseForm.nameNational));
+		term.append(StringUtils.uncapitalize(this.doseForm.getNormalizedNameNational()));
 		return term.toString();
+	}
+
+	/**
+	 * @return whitespace normalized {@link Pharmaceutical#tradeName}
+	 */
+	public final String getNormalizedTradeName() {
+		return StringUtils.normalizeSpace(this.tradeName);
+	}
+
+	/**
+	 * Ex. "Solpadol paracetamol 120 mg + codeinphosphat 12 mg oral doseringsform"
+	 * @return national pharmaceutical term
+	 * @see {@link #getNationalTerm()}
+	 */
+	public final String getPharmaceuticalTerm() {
+		return new StringBuilder(getNormalizedTradeName())
+			.append(" ")
+			.append(StringUtils.uncapitalize(getNationalTerm()))
+			.toString();
+	}
+
+	/**
+	 * Generate repeatable {@link UUID} based on {@link Pharmaceutical#drugId}, {@link Pharmaceutical#tradeName}, national {@link Pharmaceutical#components} & national {@link Pharmaceutical#doseForm}.
+	 * @return {@link UUID} v3
+	 * @throws UnsupportedEncodingException
+	 * @see {@link #nameUUIDFromList(List)}
+	 */
+	public final UUID getPharmaceuticalUUID() throws UnsupportedEncodingException {
+		List<String> tokens = new ArrayList<>();
+		// ensure whitespace doesn't affect resulting hash
+		tokens.addAll(Arrays.asList(this.drugId.split(Constant.REGEX_WHITESPACE_GREEDY)));
+		tokens.addAll(Arrays.asList(this.tradeName.split(Constant.REGEX_WHITESPACE_GREEDY)));
+		tokens.addAll(Arrays.asList(getPharmaceuticalTerm().split(Constant.REGEX_WHITESPACE_GREEDY)));
+		return nameUUIDFromList(tokens);
 	}
 
 	@Override
@@ -132,6 +195,23 @@ public class Pharmaceutical implements Serializable {
 		result = prime * result + ((this.doseForm == null) ? 0 : this.doseForm.hashCode());
 		result = prime * result + ((this.drugId == null) ? 0 : this.drugId.hashCode());
 		return prime * result + ((this.tradeName == null) ? 0 : this.tradeName.hashCode());
+	}
+
+	/**
+	 * Attempt to generate repeatable {@link UUID} for repeated calls with identical tokens, regardless of character case and order.
+	 * @param tokens
+	 * @return {@link UUID} v3
+	 * @throws UnsupportedEncodingException
+	 */
+	private static UUID nameUUIDFromList(final List<String> tokens) throws UnsupportedEncodingException {
+		// support random token order, intention is repeatable UUID
+		Collections.sort(tokens);
+		// generate bytes
+		StringBuilder data = new StringBuilder();
+		for (String token : tokens) {
+			data.append(token);
+		}
+		return UUID.nameUUIDFromBytes(data.toString().toLowerCase(Locale.ENGLISH).getBytes(CharEncoding.UTF_8));
 	}
 
 	@Override

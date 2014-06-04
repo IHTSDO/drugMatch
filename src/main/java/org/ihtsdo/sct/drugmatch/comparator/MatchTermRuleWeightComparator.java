@@ -1,7 +1,9 @@
-package org.ihtsdo.sct.drugmatch.match;
+package org.ihtsdo.sct.drugmatch.comparator;
 
 import java.io.Serializable;
 import java.util.Comparator;
+
+import org.ihtsdo.sct.drugmatch.match.MatchTermRule;
 
 /**
  * @author dev-team@carecom.dk

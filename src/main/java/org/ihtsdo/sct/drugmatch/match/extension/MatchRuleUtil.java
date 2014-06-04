@@ -13,6 +13,9 @@ public final class MatchRuleUtil {
 
 	private static final Logger log = LoggerFactory.getLogger(MatchRuleUtil.class);
 
+	/**
+	 * DON'T INSTANTIATE A STATIC HELPER!
+	 */
 	private MatchRuleUtil() {
 		throw new UnsupportedOperationException();
 	}

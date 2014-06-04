@@ -1,6 +1,7 @@
 package org.ihtsdo.sct.drugmatch.match;
 
 /**
+ * "Match" attribute relationship rules.
  * @author dev-team@carecom.dk
  */
 public enum MatchAttributeRule {

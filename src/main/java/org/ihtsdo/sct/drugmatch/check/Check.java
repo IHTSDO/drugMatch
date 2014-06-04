@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -17,7 +16,9 @@ import java.util.TreeSet;
 
 import org.apache.commons.codec.CharEncoding;
 import org.ihtsdo.sct.drugmatch.check.extension.CheckValidationHelper;
+import org.ihtsdo.sct.drugmatch.comparator.StringArrayComparator;
 import org.ihtsdo.sct.drugmatch.exception.DrugMatchConfigurationException;
+import org.ihtsdo.sct.drugmatch.exception.DrugMatchStrictModeViolationException;
 import org.ihtsdo.sct.drugmatch.model.Component;
 import org.ihtsdo.sct.drugmatch.model.DoseForm;
 import org.ihtsdo.sct.drugmatch.model.Pharmaceutical;
@@ -31,42 +32,14 @@ import org.slf4j.LoggerFactory;
 import au.com.bytecode.opencsv.CSVWriter;
 
 /**
+ * DrugMatch "Check".
  * @author dev-team@carecom.dk
  */
 public class Check {
 
 	private static final Logger log = LoggerFactory.getLogger(Check.class);
 
-	private static final Comparator<String[]> STRING_ARRAY_COMPARATOR = new Comparator<String[]>() {
-
-		public final int compare(final String[] o1,
-				final String[] o2) {
-			int result = o1.length - o2.length;
-			if (result == 0) {
-				String v1,
-					v2;
-				for (int i = 0; i < o1.length; i++) {
-					v1 = o1[i];
-					v2 = o2[i];
-					if (v1 == null
-							&& v2 == null) {
-						result = 0;
-					} else if (v1 == null) {
-						result = 1;
-					} else if (v2 == null) {
-						result = -1;
-					} else {
-						result = v1.compareTo(v2);
-					}
-					if (result != 0) {
-						break;
-					}
-				}
-			}
-			return result;
-		}
-
-	};
+	private static final StringArrayComparator STRING_ARRAY_COMPARATOR = new StringArrayComparator();
 
 	private final CheckValidation checkValidation;
 
@@ -94,6 +67,12 @@ public class Check {
 
 	private final VerificationService service;
 
+	/**
+	 * @param pharmaceuticals
+	 * @param isoNow
+	 * @param service
+	 * @throws DrugMatchConfigurationException
+	 */
 	public Check(final List<Pharmaceutical> pharmaceuticals,
 			final String isoNow,
 			final VerificationService service) throws DrugMatchConfigurationException {
@@ -111,6 +90,10 @@ public class Check {
 		this.service = service;
 	}
 
+	/**
+	 * @return output file content separator
+	 * @throws DrugMatchConfigurationException
+	 */
 	public static char getOutputFileContentSeparator() throws DrugMatchConfigurationException {
 		String separatorSetting = DrugMatchProperties.getFileContentSeparatorCharacter();
 		if (separatorSetting == null) {
@@ -126,7 +109,7 @@ public class Check {
 	 * @throws IOException
 	 */
 	private void checkDoseForms() throws IOException, DrugMatchConfigurationException {
-		log.info("Starting Dose form \"Check\" ({} Dose forms)", this.doseForms.size());
+		log.info("Starting Dose form \"Check\" ({} Dose forms)", String.valueOf(this.doseForms.size()));
 		List<ConceptSearchResultDescriptor> matches;
 		for (Map.Entry<DoseForm, Map<Locale, List<ConceptSearchResultDescriptor>>> entry : this.doseForms.entrySet()) {
 			// "check" national
@@ -157,7 +140,7 @@ public class Check {
 	 * @throws IOException
 	 */
 	private void checkSubstances() throws IOException, DrugMatchConfigurationException {
-		log.info("Starting Substance \"Check\" ({} Substances)", this.substances.size());
+		log.info("Starting Substance \"Check\" ({} Substances)", String.valueOf(this.substances.size()));
 		List<ConceptSearchResultDescriptor> matches;
 		for (Map.Entry<Substance, Map<Locale, List<ConceptSearchResultDescriptor>>> entry : this.substances.entrySet()) {
 			// "check" national
@@ -188,7 +171,7 @@ public class Check {
 	 * @throws IOException
 	 */
 	private void checkUnits() throws IOException, DrugMatchConfigurationException {
-		log.info("Starting Unit \"Check\" ({} Units)", this.units.size());
+		log.info("Starting Unit \"Check\" ({} Units)", String.valueOf(this.units.size()));
 		List<ConceptSearchResultDescriptor> matches;
 		for (Map.Entry<String, Map<Locale, List<ConceptSearchResultDescriptor>>> entry : this.units.entrySet()) {
 			// "check" national
@@ -210,9 +193,9 @@ public class Check {
 	/**
 	 * Extract {@link CheckRule#CASE_INSENSITIVE_MATCH} & {@link CheckRule#EXACT_MATCH} matches from prospects.
 	 * @param prospects
-	 * @return {@link Map}(Component name, SNOMED CT Concept ID)
+	 * @return unmodifiable {@link Map}(Component name, SNOMED CT Concept ID)
 	 */
-	private Map<String, Long> getMatches(final Map<String, Map<Locale, List<ConceptSearchResultDescriptor>>> prospects) {
+	private static Map<String, Long> getMatches(final Map<String, Map<Locale, List<ConceptSearchResultDescriptor>>> prospects) {
 		Map<String, Long> result = new HashMap<>(prospects.size());
 		List<ConceptSearchResultDescriptor> englishDescriptors,
 		matchDescriptors,
@@ -228,22 +211,55 @@ public class Check {
 			if (matchDescriptors.size() == 1
 					&& (CheckRule.CASE_INSENSITIVE_MATCH.equals(checkRule)
 							|| CheckRule.EXACT_MATCH.equals(checkRule)
-							|| CheckRule.CONCATENATION_MATCH.equals(checkRule)
-							|| CheckRule.INFLECTION_MATCH.equals(checkRule)
 							|| CheckRule.TRANSLATION_MISSING.equals(checkRule))) {
 				result.put(prospectEntry.getKey(),
 						Long.valueOf(matchDescriptors.iterator().next().conceptCode));
 			}
 		}
-		return result;
+		return Collections.unmodifiableMap(result);
 	}
 
-	public final void execute() throws IOException, DrugMatchConfigurationException {
+	/**
+	 * Execute DrugMatch "Check".
+	 * @throws DrugMatchConfigurationException
+	 * @throws DrugMatchStrictModeViolationException
+	 * @throws IOException
+	 */
+	public final void execute() throws DrugMatchConfigurationException, DrugMatchStrictModeViolationException, IOException {
 		log.info("Starting \"Check\"");
 		checkDoseForms();
 		checkSubstances();
 		checkUnits();
 		log.info("Completed \"Check\"");
+		if (DrugMatchProperties.isStrictMode()) {
+			int missingDoseForms = this.doseForms.size() - getDoseForm2Id().size();
+			int missingSubstances = this.substances.size() - getSubstance2Id().size();
+			int missingUnits = this.units.size() - getUnit2Id().size();
+			if (missingDoseForms > 0
+					|| missingSubstances > 0
+					|| missingUnits > 0) {
+				StringBuilder msg = new StringBuilder("FLOW ABORTED, CAUSE: STRICT MODE, VIOLATION(S) DETECTED DURING \"Check\":");
+				if (missingDoseForms > 0) {
+					msg.append(" MISSING ");
+					msg.append(missingDoseForms);
+					msg.append(" DOSE FORM(S),");
+				}
+				if (missingSubstances > 0) {
+					msg.append(" MISSING ");
+					msg.append(missingSubstances);
+					msg.append(" SUBSTANCE(S),");
+				}
+				if (missingUnits > 0) {
+					msg.append(" MISSING ");
+					msg.append(missingUnits);
+					msg.append(" UNIT(S)!");
+				}
+				if (msg.charAt(msg.length() - 1) == ',') {
+					msg.setCharAt(msg.length() - 1, '!');
+				}
+				throw new DrugMatchStrictModeViolationException(msg.toString());
+			}
+		}
 	}
 
 	/**
@@ -297,9 +313,16 @@ public class Check {
 		return getMatches(this.units);
 	}
 
+	/**
+	 * Export report.
+	 * @param report type
+	 * @param fileName destination
+	 * @throws IOException
+	 * @throws DrugMatchConfigurationException
+	 */
 	private void report(final Report report,
 			final String fileName) throws IOException, DrugMatchConfigurationException {
-		String fullFileName = DrugMatchProperties.getOutputDirectory().getPath() + File.separator + "check_" + fileName + "_" + this.isoNow + ".csv";
+		String fullFileName = DrugMatchProperties.getReportDirectory().getPath() + File.separator + "check_" + fileName + "_" + this.isoNow + ".csv";
 		String quoteCharacter = DrugMatchProperties.getFileContentQuoteCharacter();
 		char quoteChar = (quoteCharacter == null) ? CSVWriter.NO_QUOTE_CHARACTER : quoteCharacter.charAt(0);
 		try (CSVWriter writer = new CSVWriter(new OutputStreamWriter(new FileOutputStream(fullFileName),
@@ -442,7 +465,7 @@ public class Check {
 	 * @param matchDescriptors
 	 * @return {@link CheckRule} matched
 	 */
-	public final CheckRule getRule(final String componentName,
+	public static CheckRule getRule(final String componentName,
 			final List<ConceptSearchResultDescriptor> nationalDescriptors,
 			final List<ConceptSearchResultDescriptor> matchDescriptors) {
 		// generic checks
@@ -458,13 +481,21 @@ public class Check {
 			return CheckRule.ZERO_MATCH;
 		} // else
 		if (matchDescriptors.size() == 1) {
-			// custom or generic check
-			return this.checkValidation.getRule(componentName,
-					matchDescriptors.iterator().next());
+			ConceptSearchResultDescriptor conceptSearchResultDescriptor = matchDescriptors.iterator().next();
+			if (componentName.equals(conceptSearchResultDescriptor.descriptionTerm)) {
+				return CheckRule.EXACT_MATCH;
+			} // else
+			if (componentName.equalsIgnoreCase(conceptSearchResultDescriptor.descriptionTerm)) {
+				return CheckRule.CASE_INSENSITIVE_MATCH;
+			} // else
+			return CheckRule.COMPONENT_AND_TERM_MISMATCH;
 		} // else
 		return CheckRule.AMBIGUOUS_MATCH;
 	}
 
+	/**
+	 * "Check" report types.
+	 */
 	private enum Report {
 		DOSE_FORM_ENGLISH,
 		DOSE_FORM_NATIONAL,
@@ -473,6 +504,9 @@ public class Check {
 		UNIT;
 	}
 
+	/**
+	 * "Check" locale.
+	 */
 	private enum Locale {
 		ENGLISH,
 		NATIONAL;

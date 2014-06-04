@@ -1,5 +1,10 @@
 <FindBugsFilter>
 
+	<!-- exclude auto-generated SCT ID service -->
+	<Match>
+		<Package name="org.ihtsdo.sct.id.service" />
+	</Match>
+
 	<!-- exclude SE_NO_SERIALVERSIONID, https://www.ibm.com/developerworks/community/blogs/woolf/entry/serialization_and_serial_version_uid?lang=en -->
 	<Match>
 		<Bug code="SnVI" />
@@ -10,13 +15,6 @@
 		<Class name="org.ihtsdo.sct.drugmatch.DrugMatch" />
 		<Method name="main" />
 		<Bug code="Dm" />
-	</Match>
-
-	<!-- exclude null test -->
-	<Match>
-		<Class name="org.ihtsdo.sct.drugmatch.check.CheckTest" />
-		<Method name="getMatchDescriptors" />
-		<Bug code="NP" />
 	</Match>
 
 </FindBugsFilter>

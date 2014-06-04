@@ -36,14 +36,14 @@ public class MatchRuleHelperDanishImpl implements MatchRuleHelper {
 
 
 		Map<MatchTermRule, String> tmpTermRuleResult = new HashMap<>();
-		tmpTermRuleResult.put(MatchTermRule.EXACT_NATIONAL_MATCH, "Exact");
+		tmpTermRuleResult.put(MatchTermRule.GENERIC_EXACT_NATIONAL_MATCH, "Exact");
 
-		tmpTermRuleResult.put(MatchTermRule.CASE_INSENSITIVE_NATIONAL_MATCH, "Product – all attributes found – Translation error");
-		tmpTermRuleResult.put(MatchTermRule.INCORRECT_COMPONENT_ORDER_NATIONAL, "Product – all attributes found – Translation error");
+		tmpTermRuleResult.put(MatchTermRule.GENERIC_CASE_INSENSITIVE_NATIONAL_MATCH, "Product – all attributes found – Translation error");
+		tmpTermRuleResult.put(MatchTermRule.GENERIC_INCORRECT_COMPONENT_ORDER_NATIONAL, "Product – all attributes found – Translation error");
 
-		tmpTermRuleResult.put(MatchTermRule.CASE_INSENSITIVE_ENGLISH_MATCH, "Product – all attributes found - Translation missing");
-		tmpTermRuleResult.put(MatchTermRule.EXACT_ENGLISH_MATCH, "Product – all attributes found - Translation missing");
-		tmpTermRuleResult.put(MatchTermRule.INCORRECT_COMPONENT_ORDER_ENGLISH, "Product – all attributes found - Translation missing");
+		tmpTermRuleResult.put(MatchTermRule.GENERIC_CASE_INSENSITIVE_ENGLISH_MATCH, "Product – all attributes found - Translation missing");
+		tmpTermRuleResult.put(MatchTermRule.GENERIC_EXACT_ENGLISH_MATCH, "Product – all attributes found - Translation missing");
+		tmpTermRuleResult.put(MatchTermRule.GENERIC_INCORRECT_COMPONENT_ORDER_ENGLISH, "Product – all attributes found - Translation missing");
 
 		tmpTermRuleResult.put(MatchTermRule.ZERO_TERM_MATCH, "Product missing");
 

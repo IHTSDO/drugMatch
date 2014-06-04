@@ -1,47 +1,68 @@
 package org.ihtsdo.sct.drugmatch.match;
 
 /**
+ * "Match" term rules.
  * @author dev-team@carecom.dk
  */
 public enum MatchTermRule {
 
-	EXACT_NATIONAL_MATCH(4),
+	PHARMACEUTICAL_EXACT_NATIONAL_MATCH(15, false),
 
-	EXACT_ENGLISH_MATCH(3),
+	PHARMACEUTICAL_CASE_INSENSITIVE_NATIONAL_MATCH(10, false),
 
-
-	CASE_INSENSITIVE_NATIONAL_MATCH(2),
-
-	CASE_INSENSITIVE_ENGLISH_MATCH(1),
+	PHARMACEUTICAL_INCORRECT_COMPONENT_ORDER_NATIONAL(5, false),
 
 
-	INCORRECT_COMPONENT_ORDER_NATIONAL(0),
+	GENERIC_EXACT_NATIONAL_MATCH(4, true),
 
-	MISSING_NATIONAL_SUBSTANCE(-1),
-
-	MISSING_NATIONAL_DOSE_FORM(-2),
-
-	MISSING_NATIONAL_UNIT(-3),
-
-	MISSING_NATIONAL_STRENGTH(-4),
+	GENERIC_EXACT_ENGLISH_MATCH(3, true),
 
 
-	INCORRECT_COMPONENT_ORDER_ENGLISH(-9),
+	GENERIC_CASE_INSENSITIVE_NATIONAL_MATCH(2, true),
 
-	MISSING_ENGLISH_SUBSTANCE(-10),
-
-	MISSING_ENGLISH_DOSE_FORM(-20),
-
-	MISSING_ENGLISH_UNIT(-30),
-
-	MISSING_ENGLISH_STRENGTH(-40),
+	GENERIC_CASE_INSENSITIVE_ENGLISH_MATCH(1, true),
 
 
-	AMBIGUOUS_MATCH(-50),
+	GENERIC_INCORRECT_COMPONENT_ORDER_NATIONAL(0, true),
 
-	ZERO_TERM_MATCH(-100),
 
-	ZERO_ATTRIBUTE_MATCH(-101);
+	PHARMACEUTICAL_PARTIAL_TRADE_NAME_NATIONAL(-1, false),
+
+
+	GENERIC_PARTIAL_NATIONAL_DOSE_FORM(-3, true),
+
+	GENERIC_MISSING_NATIONAL_SUBSTANCE(-5, true),
+
+	GENERIC_MISSING_NATIONAL_DOSE_FORM(-10, true),
+
+	GENERIC_MISSING_NATIONAL_UNIT(-15, true),
+
+	GENERIC_MISSING_NATIONAL_STRENGTH(-20, true),
+
+
+	GENERIC_INCORRECT_COMPONENT_ORDER_ENGLISH(-25, true),
+
+	GENERIC_PARTIAL_ENGLISH_DOSE_FORM(-30, true),
+
+	GENERIC_MISSING_ENGLISH_SUBSTANCE(-35, true),
+
+	GENERIC_MISSING_ENGLISH_DOSE_FORM(-40, true),
+
+	GENERIC_MISSING_ENGLISH_UNIT(-45, true),
+
+	GENERIC_MISSING_ENGLISH_STRENGTH(-50, true),
+
+
+	AMBIGUOUS_MATCH(-75, true),
+
+	ZERO_TERM_MATCH(-100, true),
+
+	ZERO_ATTRIBUTE_MATCH(-200, true);
+
+	/**
+	 * Rule type
+	 */
+	private final boolean isGeneric;
 
 	/**
 	 * Rule weight, the higher the weight the more precise term match.
@@ -51,8 +72,17 @@ public enum MatchTermRule {
 	/**
 	 * @param weight expected to be unique! (within this context)
 	 */
-	private MatchTermRule(final int weight) {
+	private MatchTermRule(final int weight,
+			final boolean isGeneric) {
+		this.isGeneric = isGeneric;
 		this.weight = weight;
+	}
+
+	/**
+	 * @return rule type
+	 */
+	public boolean isGeneric() {
+		return this.isGeneric;
 	}
 
 	/**

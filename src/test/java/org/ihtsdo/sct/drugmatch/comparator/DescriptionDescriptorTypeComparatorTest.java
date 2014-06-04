@@ -1,6 +1,6 @@
-package org.ihtsdo.sct.drugmatch.match;
+package org.ihtsdo.sct.drugmatch.comparator;
 
-import org.ihtsdo.sct.drugmatch.enumeration.DescriptionType;
+import org.ihtsdo.sct.drugmatch.constant.rf1.DescriptionType;
 import org.ihtsdo.sct.drugmatch.verification.service.healthterm.model.DescriptionDescriptor;
 import org.junit.Assert;
 import org.junit.Test;

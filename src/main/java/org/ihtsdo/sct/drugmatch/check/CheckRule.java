@@ -1,6 +1,7 @@
 package org.ihtsdo.sct.drugmatch.check;
 
 /**
+ * "Check" rules.
  * @author dev-team@carecom.dk
  */
 public enum CheckRule {
@@ -9,11 +10,9 @@ public enum CheckRule {
 
 	CASE_INSENSITIVE_MATCH,
 
-	CONCATENATION_MATCH,
+	COMPONENT_AND_TERM_MISMATCH,
 
 	EXACT_MATCH,
-
-	INFLECTION_MATCH,
 
 	TRANSLATION_MISSING,
 

@@ -60,7 +60,6 @@ public class MatchTermHelperTest {
 		LAMIVUDINE_STAVUDINE_NEVIRAPINE_COMPONENTS = Collections.unmodifiableList(lamivudineStavudineNevirapineComponents);
 	}
 
-
 	@Test
 	public final void getComponentTermTokens4MultiComponent() {
 		String[] componentTokens = MatchTermHelper.getComponentTermTokens("Lamivudine 150mg + stavudine 30mg + nevirapine 200mg"); // excluding dose form
@@ -89,6 +88,325 @@ public class MatchTermHelperTest {
 				Arrays.toString(componentTokens));
 	}
 
+	@Test
+	public final void getMatchPharmaceuticalRuleEnglish4MultiComponent() {
+		List<Component> multipleComponents = new ArrayList<>();
+		multipleComponents.add(new Component("Substance A English",
+				null, // substanceNameNational
+				"10",
+				"mg"));
+		multipleComponents.add(new Component("Substance B English",
+				null, // substanceNameNational
+				"20",
+				"cg"));
+		multipleComponents.add(new Component("Substance C English",
+				null, // substanceNameNational
+				"30",
+				"dg"));
+		Pharmaceutical expectedPharmaceutical = new Pharmaceutical(multipleComponents,
+				"Oral tablet",
+				null, // doseFormNational
+				null, // drugId
+				"Trade name");
+		// missing component
+		Assert.assertEquals(null,
+				MatchTermHelper.getMatchPharmaceuticalRuleEnglish("Trade name substance A English 10 mg + substance C English 30 dg oral tablet",
+						expectedPharmaceutical));
+		// generic incorrect component order
+		Assert.assertEquals(MatchTermRule.GENERIC_INCORRECT_COMPONENT_ORDER_ENGLISH,
+				MatchTermHelper.getMatchPharmaceuticalRuleEnglish("Substance B English 20 cg + substance C English 30 dg + substance A English 10 mg oral tablet",
+						expectedPharmaceutical));
+		// case insensitive pharmaceutical match
+		Assert.assertEquals(MatchTermRule.GENERIC_CASE_INSENSITIVE_ENGLISH_MATCH,
+				MatchTermHelper.getMatchPharmaceuticalRuleEnglish("TRADE NAME SUBSTANCE A ENGLISH 10 MG + SUBSTANCE B ENGLISH 20 CG + SUBSTANCE C ENGLISH 30 DG ORAL TABLET",
+						expectedPharmaceutical));
+	}
+
+	@Test
+	public final void getMatchPharmaceuticalRuleEnglish4SingleComponent() {
+		Pharmaceutical expectedPharmaceutical = new Pharmaceutical(Collections.unmodifiableList(Collections.singletonList(new Component("Substance name English",
+				null, // substanceNameNational
+				"10",
+				"mg"))),
+				"Oral tablet",
+				null, // doseFormNational
+				null, // drugId
+				"Trade name");
+		// missing component
+		Assert.assertEquals(null,
+				MatchTermHelper.getMatchPharmaceuticalRuleEnglish("",
+						expectedPharmaceutical));
+		// undesired component - substance
+		Assert.assertEquals(null,
+				MatchTermHelper.getMatchPharmaceuticalRuleEnglish("Trade name subst4nc3 name English 10 mg oral tablet",
+						expectedPharmaceutical));
+		// undesired component - strength
+		Assert.assertEquals(null,
+				MatchTermHelper.getMatchPharmaceuticalRuleEnglish("Trade name substance name English 100 mg oral tablet",
+						expectedPharmaceutical));
+		// undesired component - unit
+		Assert.assertEquals(null,
+				MatchTermHelper.getMatchPharmaceuticalRuleEnglish("Trade name substance name English 10 kg oral tablet",
+						expectedPharmaceutical));
+		// missing dose form
+		Assert.assertEquals(MatchTermRule.GENERIC_MISSING_ENGLISH_DOSE_FORM,
+				MatchTermHelper.getMatchPharmaceuticalRuleEnglish("Trade name substance name English 10 mg",
+						expectedPharmaceutical));
+		// partial dose form
+		Assert.assertEquals(MatchTermRule.GENERIC_PARTIAL_ENGLISH_DOSE_FORM,
+				MatchTermHelper.getMatchPharmaceuticalRuleEnglish("Trade name substance name English 10 mg tablet",
+						expectedPharmaceutical));
+		// missing trade name
+		Assert.assertEquals(MatchTermRule.GENERIC_CASE_INSENSITIVE_ENGLISH_MATCH,
+				MatchTermHelper.getMatchPharmaceuticalRuleEnglish("substance name English 10 mg oral tablet",
+						expectedPharmaceutical));
+	}
+
+	@Test
+	public final void getMatchPharmaceuticalRuleNational4MultiComponent() {
+		List<Component> multipleComponents = new ArrayList<>();
+		multipleComponents.add(new Component(null, // substanceNameEnglish
+				"Substance A national",
+				"10",
+				"mg"));
+		multipleComponents.add(new Component(null, // substanceNameEnglish
+				"Substance B national",
+				"20",
+				"cg"));
+		multipleComponents.add(new Component(null, // substanceNameEnglish
+				"Substance C national",
+				"30",
+				"dg"));
+		Pharmaceutical expectedPharmaceutical = new Pharmaceutical(multipleComponents,
+				null, // doseFormEnglish
+				"oral tablet",
+				null, // drugId
+				"Trade name");
+		// Exact pharmaceutical match
+		Assert.assertEquals(MatchTermRule.PHARMACEUTICAL_EXACT_NATIONAL_MATCH,
+				MatchTermHelper.getMatchPharmaceuticalRuleNational("Trade name substance A national 10 mg + substance B national 20 cg + substance C national 30 dg oral tablet",
+						expectedPharmaceutical));
+		// missing component
+		Assert.assertEquals(null,
+				MatchTermHelper.getMatchPharmaceuticalRuleNational("Trade name substance A national 10 mg + substance C national 30 dg oral tablet",
+						expectedPharmaceutical));
+		// generic incorrect component order
+		Assert.assertEquals(MatchTermRule.GENERIC_INCORRECT_COMPONENT_ORDER_NATIONAL,
+				MatchTermHelper.getMatchPharmaceuticalRuleNational("Substance B national 20 cg + substance C national 30 dg + substance A national 10 mg oral tablet",
+						expectedPharmaceutical));
+		// incorrect component order
+		Assert.assertEquals(MatchTermRule.PHARMACEUTICAL_INCORRECT_COMPONENT_ORDER_NATIONAL,
+				MatchTermHelper.getMatchPharmaceuticalRuleNational("Trade name substance B national 20 cg + substance C national 30 dg + substance A national 10 mg oral tablet",
+						expectedPharmaceutical));
+		// case insensitive pharmaceutical match
+		Assert.assertEquals(MatchTermRule.PHARMACEUTICAL_CASE_INSENSITIVE_NATIONAL_MATCH,
+				MatchTermHelper.getMatchPharmaceuticalRuleNational("TRADE NAME SUBSTANCE A NATIONAL 10 MG + SUBSTANCE B NATIONAL 20 CG + SUBSTANCE C NATIONAL 30 DG ORAL TABLET",
+						expectedPharmaceutical));
+	}
+
+	@Test
+	public final void getMatchPharmaceuticalRuleNational4SingleComponent() {
+		Pharmaceutical expectedPharmaceutical = new Pharmaceutical(Collections.unmodifiableList(Collections.singletonList(new Component(null, // substanceNameEnglish
+				"Substance name national",
+				"10",
+				"mg"))),
+				null, // doseFormEnglish
+				"oral tablet",
+				null, // drugId
+				"Trade name");
+		// Exact pharmaceutical match
+		Assert.assertEquals(MatchTermRule.PHARMACEUTICAL_EXACT_NATIONAL_MATCH,
+				MatchTermHelper.getMatchPharmaceuticalRuleNational("Trade name substance name national 10 mg oral tablet",
+						expectedPharmaceutical));
+		// missing component
+		Assert.assertEquals(null,
+				MatchTermHelper.getMatchPharmaceuticalRuleNational("",
+						expectedPharmaceutical));
+		// undesired component - substance
+		Assert.assertEquals(null,
+				MatchTermHelper.getMatchPharmaceuticalRuleNational("Trade name subst4nc3 name national 10 mg oral tablet",
+						expectedPharmaceutical));
+		// undesired component - strength
+		Assert.assertEquals(null,
+				MatchTermHelper.getMatchPharmaceuticalRuleNational("Trade name substance name national 100 mg oral tablet",
+						expectedPharmaceutical));
+		// undesired component - unit
+		Assert.assertEquals(null,
+				MatchTermHelper.getMatchPharmaceuticalRuleNational("Trade name substance name national 10 kg oral tablet",
+						expectedPharmaceutical));
+		// missing dose form
+		Assert.assertEquals(MatchTermRule.GENERIC_MISSING_NATIONAL_DOSE_FORM,
+				MatchTermHelper.getMatchPharmaceuticalRuleNational("Trade name substance name national 10 mg",
+						expectedPharmaceutical));
+		// partial dose form
+		Assert.assertEquals(MatchTermRule.GENERIC_PARTIAL_NATIONAL_DOSE_FORM,
+				MatchTermHelper.getMatchPharmaceuticalRuleNational("Trade name substance name national 10 mg tablet",
+						expectedPharmaceutical));
+		// missing trade name
+		Assert.assertEquals(MatchTermRule.GENERIC_CASE_INSENSITIVE_NATIONAL_MATCH,
+				MatchTermHelper.getMatchPharmaceuticalRuleNational("substance name national 10 mg oral tablet",
+						expectedPharmaceutical));
+		// partial trade name
+		Assert.assertEquals(MatchTermRule.PHARMACEUTICAL_PARTIAL_TRADE_NAME_NATIONAL,
+				MatchTermHelper.getMatchPharmaceuticalRuleNational("Trade substance name national 10 mg oral tablet",
+						expectedPharmaceutical));
+		// case insensitive pharmaceutical match
+		Assert.assertEquals(MatchTermRule.PHARMACEUTICAL_CASE_INSENSITIVE_NATIONAL_MATCH,
+				MatchTermHelper.getMatchPharmaceuticalRuleNational("TRADE NAME SUBSTANCE NAME NATIONAL 10 MG ORAL TABLET",
+						expectedPharmaceutical));
+	}
+
+	@Test
+	public final void getMatchTermRuleEnglish4MultiComponent() {
+		List<Component> multipleComponents = new ArrayList<>();
+		multipleComponents.add(new Component("Substance A English",
+				null, // substanceNameNational
+				"10",
+				"mg"));
+		multipleComponents.add(new Component("Substance B English",
+				null, // substanceNameNational
+				"20",
+				"cg"));
+		multipleComponents.add(new Component("Substance C English",
+				null, // substanceNameNational
+				"30",
+				"dg"));
+		Pharmaceutical expectedPharmaceutical = new Pharmaceutical(multipleComponents,
+				"Oral tablet",
+				null, // doseFormNational
+				null, // drugId
+				"Trade name");
+		// missing component
+		Assert.assertEquals(MatchTermRule.GENERIC_MISSING_ENGLISH_SUBSTANCE,
+				MatchTermHelper.getMatchTermRuleEnglish("Trade name substance A English 10 mg + substance C English 30 dg oral tablet",
+						expectedPharmaceutical));
+		// generic incorrect component order
+		Assert.assertEquals(MatchTermRule.GENERIC_INCORRECT_COMPONENT_ORDER_ENGLISH,
+				MatchTermHelper.getMatchTermRuleEnglish("Substance B English 20 cg + substance C English 30 dg + substance A English 10 mg oral tablet",
+						expectedPharmaceutical));
+		// case insensitive match
+		Assert.assertEquals(MatchTermRule.GENERIC_CASE_INSENSITIVE_ENGLISH_MATCH,
+				MatchTermHelper.getMatchTermRuleEnglish("SUBSTANCE A ENGLISH 10 MG + SUBSTANCE B ENGLISH 20 CG + SUBSTANCE C ENGLISH 30 DG ORAL TABLET",
+						expectedPharmaceutical));
+	}
+
+	@Test
+	public final void getMatchTermRuleEnglish4SingleComponent() {
+		Pharmaceutical expectedPharmaceutical = new Pharmaceutical(Collections.unmodifiableList(Collections.singletonList(new Component("Substance name English",
+				null, // substanceNameNational
+				"10",
+				"mg"))),
+				"Oral tablet",
+				null, // doseFormNational
+				null, // drugId
+				"Trade name");
+		// generic
+		Assert.assertEquals(MatchTermRule.GENERIC_EXACT_ENGLISH_MATCH,
+				MatchTermHelper.getMatchTermRuleEnglish("Substance name English 10 mg oral tablet",
+						expectedPharmaceutical));
+		// generic case-insensitive
+		Assert.assertEquals(MatchTermRule.GENERIC_CASE_INSENSITIVE_ENGLISH_MATCH,
+				MatchTermHelper.getMatchTermRuleEnglish("substance name English 10 mg oral tablet",
+						expectedPharmaceutical));
+		// undesired component - substance
+		Assert.assertEquals(MatchTermRule.GENERIC_MISSING_ENGLISH_SUBSTANCE,
+				MatchTermHelper.getMatchTermRuleEnglish("Trade name subst4nc3 name English 10 mg oral tablet",
+						expectedPharmaceutical));
+		// undesired component - strength
+		Assert.assertEquals(MatchTermRule.GENERIC_MISSING_ENGLISH_STRENGTH,
+				MatchTermHelper.getMatchTermRuleEnglish("Trade name substance name English 100 mg oral tablet",
+						expectedPharmaceutical));
+		// undesired component - unit
+		Assert.assertEquals(MatchTermRule.GENERIC_MISSING_ENGLISH_UNIT,
+				MatchTermHelper.getMatchTermRuleEnglish("Trade name substance name English 10 kg oral tablet",
+						expectedPharmaceutical));
+		// missing dose form
+		Assert.assertEquals(MatchTermRule.GENERIC_MISSING_ENGLISH_DOSE_FORM,
+				MatchTermHelper.getMatchTermRuleEnglish("Trade name substance name English 10mg",
+						expectedPharmaceutical));
+		// partial dose form
+		Assert.assertEquals(MatchTermRule.GENERIC_PARTIAL_ENGLISH_DOSE_FORM,
+				MatchTermHelper.getMatchTermRuleEnglish("Trade name substance name English 10mg tablet",
+						expectedPharmaceutical));
+	}
+
+	@Test
+	public final void getMatchTermRuleNational4MultiComponent() {
+		List<Component> multipleComponents = new ArrayList<>();
+		multipleComponents.add(new Component(null, // substanceNameEnglish
+				"Substance A national",
+				"10",
+				"mg"));
+		multipleComponents.add(new Component(null, // substanceNameEnglish
+				"Substance B national",
+				"20",
+				"cg"));
+		multipleComponents.add(new Component(null, // substanceNameEnglish
+				"Substance C national",
+				"30",
+				"dg"));
+		Pharmaceutical expectedPharmaceutical = new Pharmaceutical(multipleComponents,
+				null, // doseFormEnglish
+				"oral tablet",
+				null, // drugId
+				"Trade name");
+		// missing component
+		Assert.assertEquals(MatchTermRule.GENERIC_MISSING_NATIONAL_SUBSTANCE,
+				MatchTermHelper.getMatchTermRuleNational("Trade name substance A national 10 mg + substance C national 30 dg oral tablet",
+						expectedPharmaceutical));
+		// generic incorrect component order
+		Assert.assertEquals(MatchTermRule.GENERIC_INCORRECT_COMPONENT_ORDER_NATIONAL,
+				MatchTermHelper.getMatchTermRuleNational("Substance B national 20 cg + substance C national 30 dg + substance A national 10 mg oral tablet",
+						expectedPharmaceutical));
+		// incorrect component order
+		Assert.assertEquals(MatchTermRule.GENERIC_INCORRECT_COMPONENT_ORDER_NATIONAL,
+				MatchTermHelper.getMatchTermRuleNational("Trade name substance B national 20 cg + substance C national 30 dg + substance A national 10 mg oral tablet",
+						expectedPharmaceutical));
+		// case insensitive pharmaceutical match
+		Assert.assertEquals(MatchTermRule.GENERIC_INCORRECT_COMPONENT_ORDER_NATIONAL,
+				MatchTermHelper.getMatchTermRuleNational("TRADE NAME SUBSTANCE A NATIONAL 10 MG + SUBSTANCE B NATIONAL 20 CG + SUBSTANCE C NATIONAL 30 DG ORAL TABLET",
+						expectedPharmaceutical));
+	}
+
+	@Test
+	public final void getMatchTermRuleNational4SingleComponent() {
+		Pharmaceutical expectedPharmaceutical = new Pharmaceutical(Collections.unmodifiableList(Collections.singletonList(new Component(null, // substanceNameEnglish
+				"Substance name national",
+				"10",
+				"mg"))),
+				null, // doseFormEnglish
+				"oral tablet",
+				null, // drugId
+				"Trade name");
+		// generic
+		Assert.assertEquals(MatchTermRule.GENERIC_EXACT_NATIONAL_MATCH,
+				MatchTermHelper.getMatchTermRuleNational("Substance name national 10 mg oral tablet",
+						expectedPharmaceutical));
+		// generic case-insensitive
+		Assert.assertEquals(MatchTermRule.GENERIC_CASE_INSENSITIVE_NATIONAL_MATCH,
+				MatchTermHelper.getMatchTermRuleNational("substance name national 10 mg oral tablet",
+						expectedPharmaceutical));
+		// undesired component - substance
+		Assert.assertEquals(MatchTermRule.GENERIC_MISSING_NATIONAL_SUBSTANCE,
+				MatchTermHelper.getMatchTermRuleNational("Trade name subst4nc3 name national 10 mg oral tablet",
+						expectedPharmaceutical));
+		// undesired component - strength
+		Assert.assertEquals(MatchTermRule.GENERIC_MISSING_NATIONAL_STRENGTH,
+				MatchTermHelper.getMatchTermRuleNational("Trade name substance name national 100 mg oral tablet",
+						expectedPharmaceutical));
+		// undesired component - unit
+		Assert.assertEquals(MatchTermRule.GENERIC_MISSING_NATIONAL_UNIT,
+				MatchTermHelper.getMatchTermRuleNational("Trade name substance name national 10 kg oral tablet",
+						expectedPharmaceutical));
+		// missing dose form
+		Assert.assertEquals(MatchTermRule.GENERIC_MISSING_NATIONAL_DOSE_FORM,
+				MatchTermHelper.getMatchTermRuleNational("Trade name substance name national 10mg",
+						expectedPharmaceutical));
+		// partial dose form
+		Assert.assertEquals(MatchTermRule.GENERIC_PARTIAL_NATIONAL_DOSE_FORM,
+				MatchTermHelper.getMatchTermRuleNational("Trade name substance name national 10mg tablet",
+						expectedPharmaceutical));
+	}
 
 	@Test
 	public final void getTermDoseForm4MultiComponent() {
@@ -108,12 +426,52 @@ public class MatchTermHelperTest {
 
 	@Test
 	public final void getTermDoseForm4SingleComponent() {
+		// ends with
+		Assert.assertEquals("oral tablet",
+				MatchTermHelper.getTermDoseForm("Substance 10 mg oral tablet",
+						Collections.<Component>emptyList(),
+						"Oral tablet"));
+		// backwards partial token match
 		Assert.assertEquals("tablet",
 				MatchTermHelper.getTermDoseForm(AZATHIOPRINE_TERM,
 						AZATHIOPRINE_COMPONENTS,
 						"Oral tablet"));
 	}
 
+	@Test
+	public final void getTermPharmaceutical4ExcessiveWhitespace() {
+		// emulate a parsed Pharmaceutical with excessive whitespace (ie. user supplied content)
+		Pharmaceutical expectedPharmaceutical = new Pharmaceutical(Collections.unmodifiableList(Collections.singletonList(new Component("Component \tname \nEnglish",
+				"Component \tname \nnational",
+				"10",
+				"mg"))),
+				"Oral   tablet",
+				"oral   tablet",
+				null, // drugId
+				"Trade \tname \nnational");
+		// English term (normalized)
+		Pharmaceutical termPharmaceutical = MatchTermHelper.getTermPharmaceutical("Component name English 10mg tablet",
+						true, // isEnglish
+						expectedPharmaceutical);
+		Assert.assertNotNull(termPharmaceutical);
+		Assert.assertEquals("Pharmaceutical ["
+				+ "drugId=null, tradeName=null, "
+				+ "doseForm=DoseForm [nameEnglish=tablet, nameNational=null], "
+				+ "components=["
+				+ "Component [substance=Substance [nameEnglish=Component name English, nameNational=null], strength=10, unit=mg]]]",
+				termPharmaceutical.toString());
+		// national term (normalized)
+		termPharmaceutical = MatchTermHelper.getTermPharmaceutical("Trade name national component name national 10 mg tablet",
+				false, // isEnglish
+				expectedPharmaceutical);
+		Assert.assertNotNull(termPharmaceutical);
+		Assert.assertEquals("Pharmaceutical ["
+				+ "drugId=null, tradeName=Trade name national, "
+				+ "doseForm=DoseForm [nameEnglish=null, nameNational=tablet], "
+				+ "components=["
+				+ "Component [substance=Substance [nameEnglish=null, nameNational=component name national], strength=10, unit=mg]]]",
+				termPharmaceutical.toString());
+	}
 
 	@Test
 	public final void getTermPharmaceutical4MultiComponent() {
@@ -133,6 +491,19 @@ public class MatchTermHelperTest {
 					+ "Component [substance=Substance [nameEnglish=Lamivudine, nameNational=null], strength=150, unit=mg], "
 					+ "Component [substance=Substance [nameEnglish=stavudine, nameNational=null], strength=30, unit=mg], "
 					+ "Component [substance=Substance [nameEnglish=nevirapine, nameNational=null], strength=200, unit=mg]]]",
+				pharmaceutical.toString());
+		// verify term component order is obeyed
+		pharmaceutical = MatchTermHelper.getTermPharmaceutical("Stavudine 30mg + nevirapine 200mg + lamivudine 150mg tablet",
+				true, // isEnglish
+				expectedPharmaceutical);
+		Assert.assertNotNull(pharmaceutical);
+		Assert.assertEquals("Pharmaceutical ["
+					+ "drugId=null, tradeName=null, "
+					+ "doseForm=DoseForm [nameEnglish=tablet, nameNational=null], "
+					+ "components=["
+					+ "Component [substance=Substance [nameEnglish=Stavudine, nameNational=null], strength=30, unit=mg], "
+					+ "Component [substance=Substance [nameEnglish=nevirapine, nameNational=null], strength=200, unit=mg], "
+					+ "Component [substance=Substance [nameEnglish=lamivudine, nameNational=null], strength=150, unit=mg]]]",
 				pharmaceutical.toString());
 	}
 
@@ -155,15 +526,28 @@ public class MatchTermHelperTest {
 				+ "Component [substance=Substance [nameEnglish=alcohol, nameNational=null], strength=7, unit=%vv], "
 				+ "Component [substance=Substance [nameEnglish=codeine phosphate, nameNational=null], strength=12, unit=mg]]]",
 				pharmaceutical.toString());
+		// verify term component order is obeyed
+		pharmaceutical = MatchTermHelper.getTermPharmaceutical("Alcohol + codeine phosphate + acetaminophen 7%vv/12mg/120mg elixir",
+				true, // isEnglish
+				expectedPharmaceutical);
+		Assert.assertNotNull(pharmaceutical);
+		Assert.assertEquals("Pharmaceutical ["
+				+ "drugId=null, tradeName=null, "
+				+ "doseForm=DoseForm [nameEnglish=elixir, nameNational=null], "
+				+ "components=["
+				+ "Component [substance=Substance [nameEnglish=Alcohol, nameNational=null], strength=7, unit=%vv], "
+				+ "Component [substance=Substance [nameEnglish=codeine phosphate, nameNational=null], strength=12, unit=mg], "
+				+ "Component [substance=Substance [nameEnglish=acetaminophen, nameNational=null], strength=120, unit=mg]]]",
+				pharmaceutical.toString());
 	}
 
 	@Test
 	public final void getTermPharmaceutical4SingleComponent() {
 		Pharmaceutical expectedPharmaceutical = new Pharmaceutical(AZATHIOPRINE_COMPONENTS,
 				"Oral tablet",
-				"oral tablet", // doseFormNational
+				"oral tablet",
 				null, // drugId
-				null); // tradeName
+				"Imuran");
 		Pharmaceutical pharmaceutical = MatchTermHelper.getTermPharmaceutical(AZATHIOPRINE_TERM,
 						true, // isEnglish
 						expectedPharmaceutical);
@@ -175,12 +559,12 @@ public class MatchTermHelperTest {
 				+ "Component [substance=Substance [nameEnglish=Azathioprine, nameNational=null], strength=10, unit=mg]]]",
 				pharmaceutical.toString());
 
-		pharmaceutical = MatchTermHelper.getTermPharmaceutical("azathioprin 10  mg tablet",
+		pharmaceutical = MatchTermHelper.getTermPharmaceutical("Imuran azathioprin 10  mg tablet",
 				false, // isEnglish
 				expectedPharmaceutical);
 		Assert.assertNotNull(pharmaceutical);
 		Assert.assertEquals("Pharmaceutical ["
-				+ "drugId=null, tradeName=null, "
+				+ "drugId=null, tradeName=Imuran, "
 				+ "doseForm=DoseForm [nameEnglish=null, nameNational=tablet], "
 				+ "components=[Component [substance=Substance [nameEnglish=null, nameNational=azathioprin], strength=10, unit=mg]]]",
 				pharmaceutical.toString());
@@ -193,6 +577,35 @@ public class MatchTermHelperTest {
 				+ "drugId=null, tradeName=null, "
 				+ "doseForm=DoseForm [nameEnglish=tablet, nameNational=null], "
 				+ "components=[]]",
-		pharmaceutical.toString());
+				pharmaceutical.toString());
+
+		// national decimal versus English decimal
+		expectedPharmaceutical = new Pharmaceutical(Collections.unmodifiableList(Collections.singletonList(new Component("Azathioprine",
+						"Azathioprin",
+						"0,01",
+						"mg"))),
+				"Oral tablet",
+				"oral tablet",
+				null, // drugId
+				"Trade name");
+		pharmaceutical = MatchTermHelper.getTermPharmaceutical("Azathioprine 0.01 mg tablet",
+				true, // isEnglish
+				expectedPharmaceutical);
+		Assert.assertNotNull(pharmaceutical);
+		Assert.assertEquals("Pharmaceutical ["
+				+ "drugId=null, tradeName=null, "
+				+ "doseForm=DoseForm [nameEnglish=tablet, nameNational=null], "
+				+ "components=[Component [substance=Substance [nameEnglish=Azathioprine, nameNational=null], strength=0.01, unit=mg]]]",
+				pharmaceutical.toString());
+
+		pharmaceutical = MatchTermHelper.getTermPharmaceutical("Trade navn azathioprin 0,01 mg tablet",
+				false, // isEnglish
+				expectedPharmaceutical);
+		Assert.assertNotNull(pharmaceutical);
+		Assert.assertEquals("Pharmaceutical ["
+				+ "drugId=null, tradeName=Trade, "
+				+ "doseForm=DoseForm [nameEnglish=null, nameNational=tablet], "
+				+ "components=[Component [substance=Substance [nameEnglish=null, nameNational=azathioprin], strength=0,01, unit=mg]]]",
+				pharmaceutical.toString());
 	}
 }

@@ -1,9 +1,9 @@
-package org.ihtsdo.sct.drugmatch.match;
+package org.ihtsdo.sct.drugmatch.comparator;
 
 import java.io.Serializable;
 import java.util.Comparator;
 
-import org.ihtsdo.sct.drugmatch.enumeration.DescriptionType;
+import org.ihtsdo.sct.drugmatch.constant.rf1.DescriptionType;
 import org.ihtsdo.sct.drugmatch.verification.service.healthterm.model.DescriptionDescriptor;
 
 /**
@@ -29,8 +29,7 @@ public class DescriptionDescriptorTypeComparator implements Comparator<Descripti
 			final DescriptionDescriptor d2) {
 		int result = d1.descriptionId.compareTo(d2.descriptionId);
 		if (result != 0) {
-			if (d1.descriptionType.intValue() == DescriptionType.PREFERRED_TERM.getId()
-					&& d1.descriptionType.intValue() != d2.descriptionType.intValue()) {
+			if (d1.descriptionType.intValue() == DescriptionType.PREFERRED_TERM.getId()) {
 				result = -1;
 			} else if (d2.descriptionType.intValue() == DescriptionType.PREFERRED_TERM.getId()
 					&& d1.descriptionType.intValue() > DescriptionType.PREFERRED_TERM.getId()) {

@@ -1,6 +1,7 @@
-package org.ihtsdo.sct.drugmatch.enumeration;
+package org.ihtsdo.sct.drugmatch.constant;
 
 /**
+ * DrugMatch return codes.
  * @author dev-team@carecom.dk
  */
 public enum ReturnCode {
@@ -11,7 +12,7 @@ public enum ReturnCode {
 
 	CONFIGURATION_ERROR(2),
 
-	INPUT_PARSE_ERROR(3);
+	STRICT_MODE_VIOLATION(3);
 
 	private final int value;
 
