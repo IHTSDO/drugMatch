@@ -57,10 +57,12 @@ public class Create {
 
 	private String fileNameConcept,
 		fileNameDescription,
+		fileNameQuantityReferenceSet,
 		fileNameReferenceSetLanguage,
 		fileNameRelationship,
 		fileNameReportCoreConcept,
 		fileNameReportExtensionConcept,
+		fileNameStatedRelationship,
 		placeHolderConceptId;
 
 	/**
@@ -144,6 +146,9 @@ public class Create {
 					sourceId,
 					String.valueOf(destinationId),
 					typeId);
+			exportRelationshipToQuantityReferenceSet(relationshipId,
+					this.unit2Id.get(component.unit), // Concept ID
+					component.strength);
 		}
 	}
 
@@ -501,7 +506,7 @@ public class Create {
 	private void exportPreferredToLanguageReferenceSet(final String descriptionId) throws DrugMatchConfigurationException, IOException {
 		boolean addHeader = false;
 		if (this.fileNameReferenceSetLanguage == null) {
-			this.fileNameReferenceSetLanguage = DrugMatchProperties.getReferenceSetLanguageDirectory().getPath() + File.separator + "der2_cRefset_LanguageDrugMatch_" + this.isoNow + ".txt";
+			this.fileNameReferenceSetLanguage = DrugMatchProperties.getReferenceSetLanguageDirectory().getPath() + File.separator + "der2_cRefset_Language_DrugMatch_" + this.isoNow + ".txt";
 			addHeader = true;
 		}
 		try (CSVWriter writer = new CSVWriter(new OutputStreamWriter(new FileOutputStream(this.fileNameReferenceSetLanguage,
@@ -586,6 +591,116 @@ public class Create {
 					ReleaseFormat2.RELATIONSHIP_GROUP_NONE,
 					typeId,
 					ReleaseFormat2.RELATIONSHIP_CHARACTERISTIC_TYPE_DEFINING_ID,
+					ReleaseFormat2.RELATIONSHIP_MODIFIER_ID
+			});
+			writer.flush();
+		}
+		exportStatedRelationship(relationshipId,
+				sourceId,
+				destinationId,
+				typeId);
+	}
+
+	/**
+	 * Export description to SNOMED CT Release Format 2 Quantity Reference Set.
+	 * @param referencedComponentId
+	 * @param conceptId
+	 * @param number
+	 * @throws DrugMatchConfigurationException
+	 * @throws IOException
+	 */
+	private void exportRelationshipToQuantityReferenceSet(String referencedComponentId,
+			Long conceptId,
+			String number) throws DrugMatchConfigurationException, IOException {
+		boolean addHeader = false;
+		if (this.fileNameQuantityReferenceSet == null) {
+			this.fileNameQuantityReferenceSet = DrugMatchProperties.getReferenceSetContentDirectory().getPath() + File.separator + "der2_ciRefset_QuantityReferenceSetConceptNumber_DrugMatch_" + this.isoNow + ".txt";
+			addHeader = true;
+		}
+		try (CSVWriter writer = new CSVWriter(new OutputStreamWriter(new FileOutputStream(this.fileNameQuantityReferenceSet,
+								!addHeader), // append
+						CharEncoding.UTF_8),
+				ReleaseFormat2.FILE_CONTENT_SEPARATOR_CHARACTER,
+				CSVWriter.NO_QUOTE_CHARACTER)) {
+			// header
+			if (addHeader) {
+				writer.writeNext(new String[] {
+						"id",
+						"effectiveTime",
+						"active",
+						"moduleId",
+						"refSetId",
+						"referencedComponentId",
+						"conceptId",
+						"number"
+				});
+				log.info("Created {}", this.fileNameQuantityReferenceSet);
+			}
+			// content
+			writer.writeNext(new String[] {
+					UUID.randomUUID().toString(), // UUID v4 as defined by Robert Turnbull (20140603, rtu@ihtsdo.org)
+					this.effectiveTime,
+					ReleaseFormat2.STATUS_ACTIVE_ID,
+					DrugMatchProperties.getModuleId(),
+					DrugMatchProperties.getQuantityReferenceSetId(),
+					referencedComponentId,
+					String.valueOf(conceptId),
+					number
+			});
+			writer.flush();
+		}
+	}
+
+	/**
+	 * Export relationship to SNOMED CT Release Format 2.
+	 * @param relationshipId
+	 * @param sourceId
+	 * @param destinationId
+	 * @param typeId
+	 * @throws DrugMatchConfigurationException
+	 * @throws IOException
+	 */
+	private void exportStatedRelationship(final String relationshipId,
+			final String sourceId,
+			final String destinationId,
+			final String typeId) throws DrugMatchConfigurationException, IOException {
+		boolean addHeader = false;
+		if (this.fileNameStatedRelationship == null) {
+			this.fileNameStatedRelationship = DrugMatchProperties.getTerminologyDirectory().getPath() + File.separator + "sct2_StatedRelationship_DrugMatch_" + this.isoNow + ".txt";
+			addHeader = true;
+		}
+		try (CSVWriter writer = new CSVWriter(new OutputStreamWriter(new FileOutputStream(this.fileNameStatedRelationship,
+								!addHeader), // append
+						CharEncoding.UTF_8),
+				ReleaseFormat2.FILE_CONTENT_SEPARATOR_CHARACTER,
+				CSVWriter.NO_QUOTE_CHARACTER)) {
+			// header
+			if (addHeader) {
+				writer.writeNext(new String[] {
+						"id",
+						"effectiveTime",
+						"active",
+						"moduleId",
+						"sourceId",
+						"destinationId",
+						"relationshipGroup",
+						"typeId",
+						"characteristicTypeId",
+						"modifierId"
+				});
+				log.info("Created {}", this.fileNameStatedRelationship);
+			}
+			// content
+			writer.writeNext(new String[] {
+					relationshipId,
+					this.effectiveTime,
+					ReleaseFormat2.STATUS_ACTIVE_ID,
+					DrugMatchProperties.getModuleId(),
+					sourceId,
+					destinationId,
+					ReleaseFormat2.RELATIONSHIP_GROUP_NONE,
+					typeId,
+					ReleaseFormat2.RELATIONSHIP_CHARACTERISTIC_TYPE_STATED_ID,
 					ReleaseFormat2.RELATIONSHIP_MODIFIER_ID
 			});
 			writer.flush();

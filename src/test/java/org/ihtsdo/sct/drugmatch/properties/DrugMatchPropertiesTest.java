@@ -98,6 +98,18 @@ public class DrugMatchPropertiesTest extends SystemEnvironmentTestSetup {
 	}
 
 	@Test
+	public final void getQuantityReferenceSetId() throws DrugMatchConfigurationException {
+		Assert.assertEquals("554481000005106",
+				DrugMatchProperties.getQuantityReferenceSetId());
+	}
+
+	@Test
+	public final void getReferenceSetContentDirectory() throws DrugMatchConfigurationException {
+		Assert.assertEquals("./result/RF2/Refset/Content",
+				DrugMatchProperties.getReferenceSetContentDirectory().toString());
+	}
+
+	@Test
 	public final void getReferenceSetDirectory() throws DrugMatchConfigurationException {
 		Assert.assertEquals("./result/RF2/Refset",
 				DrugMatchProperties.getReferenceSetDirectory().toString());

@@ -42,6 +42,7 @@ public final class DrugMatchProperties {
 			OUTPUT_DIR = "output.dir",
 
 			SCT_ID_SERVICE = "sct.id.service",
+			SCT_QUANTITY_REFERENCE_SET_ID = "sct.quantity_reference_set_id",
 			SCT_RELEASE_ID = "sct.release_id",
 
 			SETTING_FILE = "setting.file",
@@ -244,6 +245,24 @@ public final class DrugMatchProperties {
 			throw new DrugMatchConfigurationException("Unable to proceed, cause: '" + DrugMatchProperties.OUTPUT_DIR + "'='" + outputDir + "' isn't writeable");
 		}
 		return outputDir;
+	}
+
+	public static String getQuantityReferenceSetId() throws DrugMatchConfigurationException {
+		return getStringProperty(SCT_QUANTITY_REFERENCE_SET_ID);
+	}
+
+	public static File getReferenceSetContentDirectory() throws DrugMatchConfigurationException {
+		File refSetContentDir = new File(getReferenceSetDirectory().getPath() + File.separator + "Content");
+		if (!refSetContentDir.exists()) {
+			if (!refSetContentDir.mkdirs()) {
+				throw new DrugMatchConfigurationException("Unable to proceed, cause: '" + refSetContentDir + "' isn't writeable");
+			}
+			log.debug("Reference Set Content directory: {} created", refSetContentDir);
+		}
+		if (!refSetContentDir.canWrite()) {
+			throw new DrugMatchConfigurationException("Unable to proceed, cause: '" + refSetContentDir + "' isn't writeable");
+		}
+		return refSetContentDir;
 	}
 
 	public static File getReferenceSetDirectory() throws DrugMatchConfigurationException {
