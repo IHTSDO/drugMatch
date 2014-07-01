@@ -636,7 +636,7 @@
   </wsdl:binding>
   <wsdl:service name="id_generator">
     <wsdl:port name="id_generatorSOAP" binding="tns:id_generatorSOAP">
-      <soap:address location="http://95.85.42.232:8080/axis2/services/id_generator/"/>
+      <soap:address location="http://uat-release.ihtsdotools.org/axis2/services/id_generator/"/>
     </wsdl:port>
   </wsdl:service>
 </wsdl:definitions>

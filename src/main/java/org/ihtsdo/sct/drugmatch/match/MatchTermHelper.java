@@ -27,15 +27,17 @@ public final class MatchTermHelper {
 	/**
 	 * Attempt to extract "Substance strength unit" groups from the given term.
 	 * <p>
-	 * Supports "Substance strength unit + Substance strength unit" & "Substance + Substance strength unit / strength unit" notation.
+	 * Supports "Substance A strength unit + Substance B strength unit", "Substance A strength unit / Substance B strength unit" & "Substance A + Substance B strength unit / strength unit" notation.
 	 * @param componentTerm
 	 * @return "Substance strength unit" groups
 	 */
 	public static String[] getComponentTermTokens(final String componentTerm) {
-		String[] plusTokens = componentTerm.split("\\+");
-		if (plusTokens.length > 1
-				&& (plusTokens.length - 1) == StringUtils.countMatches(componentTerm, "/")) {
-			String[] slashTokens = componentTerm.split("/"),
+		int plusCount = StringUtils.countMatches(componentTerm, "+"),
+			slashCount = StringUtils.countMatches(componentTerm, "/");
+		if (plusCount > 1
+				&& plusCount == slashCount) {
+			String[] plusTokens = componentTerm.split("\\+"),
+				slashTokens = componentTerm.split("/"),
 				result = new String[plusTokens.length];
 			// attempt to group substance with strength & unit
 			Matcher matcher;
@@ -65,8 +67,15 @@ public final class MatchTermHelper {
 				}
 			}
 			return result;
-		}
-		return plusTokens;
+		} // else
+		if (plusCount == 0
+				&& slashCount > 0) {
+			return componentTerm.split("/");
+		} // else
+		if (plusCount > 0) {
+			return componentTerm.split("\\+");
+		} // else
+		return new String[] { componentTerm };
 	}
 
 	/**
@@ -77,12 +86,14 @@ public final class MatchTermHelper {
 	 * <li>{@link MatchTermRule#GENERIC_INCORRECT_COMPONENT_ORDER_ENGLISH}</li>
 	 * <li>{@link MatchTermRule#GENERIC_CASE_INSENSITIVE_ENGLISH_MATCH}</li>
 	 * </ul>
+	 * @param matchAttributeRule
 	 * @param term prospect
 	 * @param pharmaceutical reference
 	 * @return {@link MatchTermRule} applicable to term or <code>null</code>
 	 * @see #getTermPharmaceutical(String, boolean, Pharmaceutical)
 	 */
-	public static MatchTermRule getMatchPharmaceuticalRuleEnglish(final String term,
+	public static MatchTermRule getMatchPharmaceuticalRuleEnglish(final MatchAttributeRule matchAttributeRule,
+			final String term,
 			final Pharmaceutical pharmaceutical) {
 		Pharmaceutical termPharmaceutical = MatchTermHelper.getTermPharmaceutical(term,
 				true, // isEnglish
@@ -113,12 +124,15 @@ public final class MatchTermHelper {
 				}
 			}
 			// dose form
-			if (termPharmaceutical.doseForm.nameEnglish == null) {
-				return MatchTermRule.GENERIC_MISSING_ENGLISH_DOSE_FORM;
-			} // else
-			if (!pharmaceutical.doseForm.getNormalizedNameEnglish().equalsIgnoreCase(termPharmaceutical.doseForm.nameEnglish)) {
-				return MatchTermRule.GENERIC_PARTIAL_ENGLISH_DOSE_FORM;
-			} // else
+			if (MatchAttributeRule.AMBIGUOUS_MATCH_EXCLUDING_DOSE_FORM.equals(matchAttributeRule)
+					|| MatchAttributeRule.EXACT_MATCH_EXCLUDING_DOSE_FORM.equals(matchAttributeRule)) {
+				if (termPharmaceutical.doseForm.nameEnglish == null) {
+					return MatchTermRule.GENERIC_MISSING_ENGLISH_DOSE_FORM;
+				} // else
+				if (!pharmaceutical.doseForm.getNormalizedNameEnglish().equalsIgnoreCase(termPharmaceutical.doseForm.nameEnglish)) {
+					return MatchTermRule.GENERIC_PARTIAL_ENGLISH_DOSE_FORM;
+				} // else
+			}
 			if (unexpectedComponentOrder) {
 				return MatchTermRule.GENERIC_INCORRECT_COMPONENT_ORDER_ENGLISH;
 			} // else
@@ -140,12 +154,14 @@ public final class MatchTermHelper {
 	 * <li>{@link MatchTermRule#PHARMACEUTICAL_CASE_INSENSITIVE_NATIONAL_MATCH}</li>
 	 * <li>{@link MatchTermRule#PHARMACEUTICAL_PARTIAL_TRADE_NAME_NATIONAL}</li>
 	 * </ul>
+	 * @param matchAttributeRule
 	 * @param term prospect
 	 * @param pharmaceutical reference
 	 * @return {@link MatchTermRule} applicable to term or <code>null</code>
 	 * @see #getTermPharmaceutical(String, boolean, Pharmaceutical)
 	 */
-	public static MatchTermRule getMatchPharmaceuticalRuleNational(final String term,
+	public static MatchTermRule getMatchPharmaceuticalRuleNational(final MatchAttributeRule matchAttributeRule,
+			final String term,
 			final Pharmaceutical pharmaceutical) {
 		if (pharmaceutical.getPharmaceuticalTerm().equals(term)) {
 			return MatchTermRule.PHARMACEUTICAL_EXACT_NATIONAL_MATCH;
@@ -180,11 +196,14 @@ public final class MatchTermHelper {
 				}
 			}
 			// dose form
-			if (termPharmaceutical.doseForm.nameNational == null) {
-				return MatchTermRule.GENERIC_MISSING_NATIONAL_DOSE_FORM;
-			} // else
-			if (!pharmaceutical.doseForm.getNormalizedNameNational().equalsIgnoreCase(termPharmaceutical.doseForm.nameNational)) {
-				return MatchTermRule.GENERIC_PARTIAL_NATIONAL_DOSE_FORM;
+			if (MatchAttributeRule.AMBIGUOUS_MATCH_EXCLUDING_DOSE_FORM.equals(matchAttributeRule)
+					|| MatchAttributeRule.EXACT_MATCH_EXCLUDING_DOSE_FORM.equals(matchAttributeRule)) {
+				if (termPharmaceutical.doseForm.nameNational == null) {
+					return MatchTermRule.GENERIC_MISSING_NATIONAL_DOSE_FORM;
+				} // else
+				if (!pharmaceutical.doseForm.getNormalizedNameNational().equalsIgnoreCase(termPharmaceutical.doseForm.nameNational)) {
+					return MatchTermRule.GENERIC_PARTIAL_NATIONAL_DOSE_FORM;
+				} // else
 			}
 			if (unexpectedComponentOrder) {
 				if (termPharmaceutical.tradeName == null) {
@@ -216,17 +235,19 @@ public final class MatchTermHelper {
 	 * <li>{@link MatchTermRule#GENERIC_PARTIAL_ENGLISH_DOSE_FORM}</li>
 	 * <li>{@link MatchTermRule#GENERIC_INCORRECT_COMPONENT_ORDER_ENGLISH}</li>
 	 * </ul>
+	 * @param matchAttributeRule
 	 * @param term prospect
 	 * @param pharmaceutical reference
 	 * @return {@link MatchTermRule} applicable to term or <code>null</code>
 	 */
-	public static MatchTermRule getMatchTermRuleEnglish(final String term,
+	public static MatchTermRule getMatchTermRuleEnglish(final MatchAttributeRule matchAttributeRule,
+			final String term,
 			final Pharmaceutical pharmaceutical) {
-		String EnglishTerm = pharmaceutical.getEnglishTerm();
-		if (term.equals(EnglishTerm)) {
+		String englishTerm = pharmaceutical.getEnglishTerm();
+		if (term.equals(englishTerm)) {
 			return MatchTermRule.GENERIC_EXACT_ENGLISH_MATCH;
 		} // else
-		if (term.equalsIgnoreCase(EnglishTerm)) {
+		if (term.equalsIgnoreCase(englishTerm)) {
 			return MatchTermRule.GENERIC_CASE_INSENSITIVE_ENGLISH_MATCH;
 		} // else
 		boolean strengthPresent,
@@ -264,14 +285,17 @@ public final class MatchTermHelper {
 			}
 		}
 		// dose form
-		String doseForm = getTermDoseForm(term,
-				pharmaceutical.components,
-				pharmaceutical.doseForm.getNormalizedNameEnglish());
-		if (doseForm == null) {
-			return MatchTermRule.GENERIC_MISSING_ENGLISH_DOSE_FORM;
-		} // else
-		if (!pharmaceutical.doseForm.getNormalizedNameEnglish().equalsIgnoreCase(doseForm)) {
-			return MatchTermRule.GENERIC_PARTIAL_ENGLISH_DOSE_FORM;
+		if (MatchAttributeRule.AMBIGUOUS_MATCH_EXCLUDING_DOSE_FORM.equals(matchAttributeRule)
+				|| MatchAttributeRule.EXACT_MATCH_EXCLUDING_DOSE_FORM.equals(matchAttributeRule)) {
+			String doseForm = getTermDoseForm(term,
+					pharmaceutical.components,
+					pharmaceutical.doseForm.getNormalizedNameEnglish());
+			if (doseForm == null) {
+				return MatchTermRule.GENERIC_MISSING_ENGLISH_DOSE_FORM;
+			} // else
+			if (!pharmaceutical.doseForm.getNormalizedNameEnglish().equalsIgnoreCase(doseForm)) {
+				return MatchTermRule.GENERIC_PARTIAL_ENGLISH_DOSE_FORM;
+			} // else
 		}
 		return MatchTermRule.GENERIC_INCORRECT_COMPONENT_ORDER_ENGLISH;
 	}
@@ -288,11 +312,13 @@ public final class MatchTermHelper {
 	 * <li>{@link MatchTermRule#GENERIC_PARTIAL_NATIONAL_DOSE_FORM}</li>
 	 * <li>{@link MatchTermRule#GENERIC_INCORRECT_COMPONENT_ORDER_NATIONAL}</li>
 	 * </ul>
+	 * @param matchAttributeRule
 	 * @param term prospect
 	 * @param pharmaceutical reference
 	 * @return {@link MatchTermRule} applicable to term or <code>null</code>
 	 */
-	public static MatchTermRule getMatchTermRuleNational(final String term,
+	public static MatchTermRule getMatchTermRuleNational(final MatchAttributeRule matchAttributeRule,
+			final String term,
 			final Pharmaceutical pharmaceutical) {
 		String nationalTerm = pharmaceutical.getNationalTerm();
 		if (term.equals(nationalTerm)) {
@@ -336,14 +362,17 @@ public final class MatchTermHelper {
 			}
 		}
 		// dose form
-		String doseForm = getTermDoseForm(term,
-				pharmaceutical.components,
-				pharmaceutical.doseForm.getNormalizedNameNational());
-		if (doseForm == null) {
-			return MatchTermRule.GENERIC_MISSING_NATIONAL_DOSE_FORM;
-		} // else
-		if (!pharmaceutical.doseForm.getNormalizedNameNational().equalsIgnoreCase(doseForm)) {
-			return MatchTermRule.GENERIC_PARTIAL_NATIONAL_DOSE_FORM;
+		if (MatchAttributeRule.AMBIGUOUS_MATCH_EXCLUDING_DOSE_FORM.equals(matchAttributeRule)
+				|| MatchAttributeRule.EXACT_MATCH_EXCLUDING_DOSE_FORM.equals(matchAttributeRule)) {
+			String doseForm = getTermDoseForm(term,
+					pharmaceutical.components,
+					pharmaceutical.doseForm.getNormalizedNameNational());
+			if (doseForm == null) {
+				return MatchTermRule.GENERIC_MISSING_NATIONAL_DOSE_FORM;
+			} // else
+			if (!pharmaceutical.doseForm.getNormalizedNameNational().equalsIgnoreCase(doseForm)) {
+				return MatchTermRule.GENERIC_PARTIAL_NATIONAL_DOSE_FORM;
+			} // else
 		}
 		return MatchTermRule.GENERIC_INCORRECT_COMPONENT_ORDER_NATIONAL;
 	}

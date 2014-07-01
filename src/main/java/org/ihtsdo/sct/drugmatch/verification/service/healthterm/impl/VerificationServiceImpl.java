@@ -196,6 +196,11 @@ public class VerificationServiceImpl implements VerificationService {
 			path.append("&valueId=")
 				.append(valueId);
 		}
+		// remove unneeded '&' for first parameter
+		int i = path.indexOf("?&");
+		if (i > -1) {
+			path.deleteCharAt(i + 1);
+		}
 		// search
 		return getConceptSearchResult(path.toString());
 	}
@@ -205,14 +210,7 @@ public class VerificationServiceImpl implements VerificationService {
 	 */
 	public final List<ConceptDescriptor> getConceptsByIds(final Set<Long> conceptIds) throws DrugMatchConfigurationException, IOException {
 		try (CloseableHttpClient httpclient = getHttpClient();) {
-			// construct path
-			StringBuilder path = new StringBuilder("/webservice/restricted/v1.0/lookup/concept/byId?");
-			// attribute (Relationship type ID)
-			for (Long conceptId : conceptIds) {
-				path.append("&conceptId=")
-					.append(conceptId);
-			}
-			HttpGet httpget = getHttpGetJSON(path.toString());
+			HttpGet httpget = getHttpGetConceptsByIds(conceptIds);
 			try (CloseableHttpResponse response = httpclient.execute(httpget);) {
 				log.debug("Executed request: {} status: {}", httpget.getRequestLine(), response.getStatusLine());
 				if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
@@ -220,6 +218,11 @@ public class VerificationServiceImpl implements VerificationService {
 					JsonNode results = mapper.readTree(response.getEntity().getContent()).get("conceptDetailDescriptor");
 					List<ConceptDescriptor> result = mapper.readValue(results.traverse(), CONCEPT_DESCRIPTOR_TYPE_REFERENCE);
 					EntityUtils.consume(response.getEntity());
+					if (result.size() != conceptIds.size()) {
+						log.debug("Request returned: {} expected: {} result(s)!",
+								result.size(),
+								conceptIds.size());
+					}
 					return result;
 				} // else
 				StringBuilder sb = new StringBuilder();
@@ -243,6 +246,35 @@ public class VerificationServiceImpl implements VerificationService {
 				}
 			}
 		}
+	}
+
+	/**
+	 * Common logic for generating a Concept ID GET.
+	 * @param conceptIds
+	 * @return {@link HttpGet}
+	 * @throws DrugMatchConfigurationException
+	 */
+	private static HttpGet getHttpGetConceptsByIds(Set<Long> conceptIds) throws DrugMatchConfigurationException {
+		// construct path
+		StringBuilder path = new StringBuilder("/webservice/restricted/v1.0/lookup/concept/byId?");
+		// attribute (Relationship type ID)
+		for (Long conceptId : conceptIds) {
+			path.append("&conceptId=")
+				.append(conceptId);
+		}
+		// remove unneeded '&' for first parameter
+		int i = path.indexOf("?&");
+		if (i > -1) {
+			path.deleteCharAt(i + 1);
+		}
+		return getHttpGetJSON(path.toString());
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	public String getConceptsByIdsUrl(Set<Long> conceptIds) throws DrugMatchConfigurationException {
+		return getHttpGetConceptsByIds(conceptIds).getURI().toString();
 	}
 
 	/**
@@ -352,6 +384,8 @@ public class VerificationServiceImpl implements VerificationService {
 					JsonNode results = mapper.readTree(response.getEntity().getContent()).get("result");
 					List<ConceptSearchResultDescriptor> result = mapper.readValue(results.traverse(), CONCEPT_SEARCH_RESULT_DESCRIPTOR_TYPE_REFERENCE);
 					EntityUtils.consume(response.getEntity());
+					log.debug("Request returned: {} result(s).",
+							result.size());
 					return result;
 				} // else
 				StringBuilder sb = new StringBuilder();

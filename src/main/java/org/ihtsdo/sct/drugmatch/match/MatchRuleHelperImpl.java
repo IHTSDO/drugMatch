@@ -8,6 +8,13 @@ public class MatchRuleHelperImpl implements MatchRuleHelper {
 	/**
 	 * {@inheritDoc}
 	 */
+	public final String getAmbiguousMessage(MatchTermRule matchTermRule) {
+		return "AMBIGUOUS_" + matchTermRule.toString();
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
 	public final String getMessage(final MatchAttributeRule matchAttributeRule) {
 		return "ATTRIBUTE_" + matchAttributeRule.toString();
 	}

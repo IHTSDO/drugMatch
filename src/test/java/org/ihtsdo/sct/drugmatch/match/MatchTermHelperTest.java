@@ -78,6 +78,11 @@ public class MatchTermHelperTest {
 				+ "alcohol  7%vv,  "
 				+ "codeine phosphate  12mg]",
 				Arrays.toString(componentTokens));
+		componentTokens = MatchTermHelper.getComponentTermTokens("Polythiazide 0.5mg/2mg prazosin hydrochloride"); // excluding dose form
+		Assert.assertNotNull(componentTokens);
+		Assert.assertEquals("[Polythiazide 0.5mg, "
+				+ "2mg prazosin hydrochloride]",
+				Arrays.toString(componentTokens));
 	}
 
 	@Test
@@ -110,15 +115,18 @@ public class MatchTermHelperTest {
 				"Trade name");
 		// missing component
 		Assert.assertEquals(null,
-				MatchTermHelper.getMatchPharmaceuticalRuleEnglish("Trade name substance A English 10 mg + substance C English 30 dg oral tablet",
+				MatchTermHelper.getMatchPharmaceuticalRuleEnglish(MatchAttributeRule.SUBSTANCE_MISSING_CHECK_CONCEPT,
+						"Trade name substance A English 10 mg + substance C English 30 dg oral tablet",
 						expectedPharmaceutical));
 		// generic incorrect component order
 		Assert.assertEquals(MatchTermRule.GENERIC_INCORRECT_COMPONENT_ORDER_ENGLISH,
-				MatchTermHelper.getMatchPharmaceuticalRuleEnglish("Substance B English 20 cg + substance C English 30 dg + substance A English 10 mg oral tablet",
+				MatchTermHelper.getMatchPharmaceuticalRuleEnglish(MatchAttributeRule.EXACT_MATCH,
+						"Substance B English 20 cg + substance C English 30 dg + substance A English 10 mg oral tablet",
 						expectedPharmaceutical));
 		// case insensitive pharmaceutical match
 		Assert.assertEquals(MatchTermRule.GENERIC_CASE_INSENSITIVE_ENGLISH_MATCH,
-				MatchTermHelper.getMatchPharmaceuticalRuleEnglish("TRADE NAME SUBSTANCE A ENGLISH 10 MG + SUBSTANCE B ENGLISH 20 CG + SUBSTANCE C ENGLISH 30 DG ORAL TABLET",
+				MatchTermHelper.getMatchPharmaceuticalRuleEnglish(MatchAttributeRule.EXACT_MATCH,
+						"TRADE NAME SUBSTANCE A ENGLISH 10 MG + SUBSTANCE B ENGLISH 20 CG + SUBSTANCE C ENGLISH 30 DG ORAL TABLET",
 						expectedPharmaceutical));
 	}
 
@@ -134,31 +142,38 @@ public class MatchTermHelperTest {
 				"Trade name");
 		// missing component
 		Assert.assertEquals(null,
-				MatchTermHelper.getMatchPharmaceuticalRuleEnglish("",
+				MatchTermHelper.getMatchPharmaceuticalRuleEnglish(MatchAttributeRule.DOSE_FORM_MISSING_CHECK_CONCEPT,
+						"",
 						expectedPharmaceutical));
 		// undesired component - substance
 		Assert.assertEquals(null,
-				MatchTermHelper.getMatchPharmaceuticalRuleEnglish("Trade name subst4nc3 name English 10 mg oral tablet",
+				MatchTermHelper.getMatchPharmaceuticalRuleEnglish(MatchAttributeRule.AMBIGUOUS_MATCH,
+						"Trade name subst4nc3 name English 10 mg oral tablet",
 						expectedPharmaceutical));
 		// undesired component - strength
 		Assert.assertEquals(null,
-				MatchTermHelper.getMatchPharmaceuticalRuleEnglish("Trade name substance name English 100 mg oral tablet",
+				MatchTermHelper.getMatchPharmaceuticalRuleEnglish(MatchAttributeRule.AMBIGUOUS_MATCH,
+						"Trade name substance name English 100 mg oral tablet",
 						expectedPharmaceutical));
 		// undesired component - unit
 		Assert.assertEquals(null,
-				MatchTermHelper.getMatchPharmaceuticalRuleEnglish("Trade name substance name English 10 kg oral tablet",
+				MatchTermHelper.getMatchPharmaceuticalRuleEnglish(MatchAttributeRule.AMBIGUOUS_MATCH,
+						"Trade name substance name English 10 kg oral tablet",
 						expectedPharmaceutical));
 		// missing dose form
 		Assert.assertEquals(MatchTermRule.GENERIC_MISSING_ENGLISH_DOSE_FORM,
-				MatchTermHelper.getMatchPharmaceuticalRuleEnglish("Trade name substance name English 10 mg",
+				MatchTermHelper.getMatchPharmaceuticalRuleEnglish(MatchAttributeRule.EXACT_MATCH_EXCLUDING_DOSE_FORM,
+						"Trade name substance name English 10 mg",
 						expectedPharmaceutical));
 		// partial dose form
 		Assert.assertEquals(MatchTermRule.GENERIC_PARTIAL_ENGLISH_DOSE_FORM,
-				MatchTermHelper.getMatchPharmaceuticalRuleEnglish("Trade name substance name English 10 mg tablet",
+				MatchTermHelper.getMatchPharmaceuticalRuleEnglish(MatchAttributeRule.AMBIGUOUS_MATCH_EXCLUDING_DOSE_FORM,
+						"Trade name substance name English 10 mg tablet",
 						expectedPharmaceutical));
 		// missing trade name
 		Assert.assertEquals(MatchTermRule.GENERIC_CASE_INSENSITIVE_ENGLISH_MATCH,
-				MatchTermHelper.getMatchPharmaceuticalRuleEnglish("substance name English 10 mg oral tablet",
+				MatchTermHelper.getMatchPharmaceuticalRuleEnglish(MatchAttributeRule.AMBIGUOUS_MATCH,
+						"substance name English 10 mg oral tablet",
 						expectedPharmaceutical));
 	}
 
@@ -184,23 +199,28 @@ public class MatchTermHelperTest {
 				"Trade name");
 		// Exact pharmaceutical match
 		Assert.assertEquals(MatchTermRule.PHARMACEUTICAL_EXACT_NATIONAL_MATCH,
-				MatchTermHelper.getMatchPharmaceuticalRuleNational("Trade name substance A national 10 mg + substance B national 20 cg + substance C national 30 dg oral tablet",
+				MatchTermHelper.getMatchPharmaceuticalRuleNational(MatchAttributeRule.EXACT_MATCH,
+						"Trade name substance A national 10 mg + substance B national 20 cg + substance C national 30 dg oral tablet",
 						expectedPharmaceutical));
 		// missing component
 		Assert.assertEquals(null,
-				MatchTermHelper.getMatchPharmaceuticalRuleNational("Trade name substance A national 10 mg + substance C national 30 dg oral tablet",
+				MatchTermHelper.getMatchPharmaceuticalRuleNational(MatchAttributeRule.SUBSTANCE_MISSING_CHECK_CONCEPT,
+						"Trade name substance A national 10 mg + substance C national 30 dg oral tablet",
 						expectedPharmaceutical));
 		// generic incorrect component order
 		Assert.assertEquals(MatchTermRule.GENERIC_INCORRECT_COMPONENT_ORDER_NATIONAL,
-				MatchTermHelper.getMatchPharmaceuticalRuleNational("Substance B national 20 cg + substance C national 30 dg + substance A national 10 mg oral tablet",
+				MatchTermHelper.getMatchPharmaceuticalRuleNational(MatchAttributeRule.EXACT_MATCH,
+						"Substance B national 20 cg + substance C national 30 dg + substance A national 10 mg oral tablet",
 						expectedPharmaceutical));
 		// incorrect component order
 		Assert.assertEquals(MatchTermRule.PHARMACEUTICAL_INCORRECT_COMPONENT_ORDER_NATIONAL,
-				MatchTermHelper.getMatchPharmaceuticalRuleNational("Trade name substance B national 20 cg + substance C national 30 dg + substance A national 10 mg oral tablet",
+				MatchTermHelper.getMatchPharmaceuticalRuleNational(MatchAttributeRule.EXACT_MATCH,
+						"Trade name substance B national 20 cg + substance C national 30 dg + substance A national 10 mg oral tablet",
 						expectedPharmaceutical));
 		// case insensitive pharmaceutical match
 		Assert.assertEquals(MatchTermRule.PHARMACEUTICAL_CASE_INSENSITIVE_NATIONAL_MATCH,
-				MatchTermHelper.getMatchPharmaceuticalRuleNational("TRADE NAME SUBSTANCE A NATIONAL 10 MG + SUBSTANCE B NATIONAL 20 CG + SUBSTANCE C NATIONAL 30 DG ORAL TABLET",
+				MatchTermHelper.getMatchPharmaceuticalRuleNational(MatchAttributeRule.EXACT_MATCH,
+						"TRADE NAME SUBSTANCE A NATIONAL 10 MG + SUBSTANCE B NATIONAL 20 CG + SUBSTANCE C NATIONAL 30 DG ORAL TABLET",
 						expectedPharmaceutical));
 	}
 
@@ -216,43 +236,53 @@ public class MatchTermHelperTest {
 				"Trade name");
 		// Exact pharmaceutical match
 		Assert.assertEquals(MatchTermRule.PHARMACEUTICAL_EXACT_NATIONAL_MATCH,
-				MatchTermHelper.getMatchPharmaceuticalRuleNational("Trade name substance name national 10 mg oral tablet",
+				MatchTermHelper.getMatchPharmaceuticalRuleNational(MatchAttributeRule.EXACT_MATCH,
+						"Trade name substance name national 10 mg oral tablet",
 						expectedPharmaceutical));
 		// missing component
 		Assert.assertEquals(null,
-				MatchTermHelper.getMatchPharmaceuticalRuleNational("",
+				MatchTermHelper.getMatchPharmaceuticalRuleNational(MatchAttributeRule.SUBSTANCE_MISSING_CHECK_CONCEPT,
+						"",
 						expectedPharmaceutical));
 		// undesired component - substance
 		Assert.assertEquals(null,
-				MatchTermHelper.getMatchPharmaceuticalRuleNational("Trade name subst4nc3 name national 10 mg oral tablet",
+				MatchTermHelper.getMatchPharmaceuticalRuleNational(MatchAttributeRule.AMBIGUOUS_MATCH,
+						"Trade name subst4nc3 name national 10 mg oral tablet",
 						expectedPharmaceutical));
 		// undesired component - strength
 		Assert.assertEquals(null,
-				MatchTermHelper.getMatchPharmaceuticalRuleNational("Trade name substance name national 100 mg oral tablet",
+				MatchTermHelper.getMatchPharmaceuticalRuleNational(MatchAttributeRule.AMBIGUOUS_MATCH,
+						"Trade name substance name national 100 mg oral tablet",
 						expectedPharmaceutical));
 		// undesired component - unit
 		Assert.assertEquals(null,
-				MatchTermHelper.getMatchPharmaceuticalRuleNational("Trade name substance name national 10 kg oral tablet",
+				MatchTermHelper.getMatchPharmaceuticalRuleNational(MatchAttributeRule.AMBIGUOUS_MATCH,
+						"Trade name substance name national 10 kg oral tablet",
 						expectedPharmaceutical));
 		// missing dose form
 		Assert.assertEquals(MatchTermRule.GENERIC_MISSING_NATIONAL_DOSE_FORM,
-				MatchTermHelper.getMatchPharmaceuticalRuleNational("Trade name substance name national 10 mg",
+				MatchTermHelper.getMatchPharmaceuticalRuleNational(MatchAttributeRule.EXACT_MATCH_EXCLUDING_DOSE_FORM,
+						"Trade name substance name national 10 mg",
 						expectedPharmaceutical));
 		// partial dose form
 		Assert.assertEquals(MatchTermRule.GENERIC_PARTIAL_NATIONAL_DOSE_FORM,
-				MatchTermHelper.getMatchPharmaceuticalRuleNational("Trade name substance name national 10 mg tablet",
+				MatchTermHelper.getMatchPharmaceuticalRuleNational(MatchAttributeRule.AMBIGUOUS_MATCH_EXCLUDING_DOSE_FORM,
+						"Trade name substance name national 10 mg tablet",
 						expectedPharmaceutical));
 		// missing trade name
 		Assert.assertEquals(MatchTermRule.GENERIC_CASE_INSENSITIVE_NATIONAL_MATCH,
-				MatchTermHelper.getMatchPharmaceuticalRuleNational("substance name national 10 mg oral tablet",
+				MatchTermHelper.getMatchPharmaceuticalRuleNational(MatchAttributeRule.AMBIGUOUS_MATCH,
+						"substance name national 10 mg oral tablet",
 						expectedPharmaceutical));
 		// partial trade name
 		Assert.assertEquals(MatchTermRule.PHARMACEUTICAL_PARTIAL_TRADE_NAME_NATIONAL,
-				MatchTermHelper.getMatchPharmaceuticalRuleNational("Trade substance name national 10 mg oral tablet",
+				MatchTermHelper.getMatchPharmaceuticalRuleNational(MatchAttributeRule.AMBIGUOUS_MATCH,
+						"Trade substance name national 10 mg oral tablet",
 						expectedPharmaceutical));
 		// case insensitive pharmaceutical match
 		Assert.assertEquals(MatchTermRule.PHARMACEUTICAL_CASE_INSENSITIVE_NATIONAL_MATCH,
-				MatchTermHelper.getMatchPharmaceuticalRuleNational("TRADE NAME SUBSTANCE NAME NATIONAL 10 MG ORAL TABLET",
+				MatchTermHelper.getMatchPharmaceuticalRuleNational(MatchAttributeRule.AMBIGUOUS_MATCH,
+						"TRADE NAME SUBSTANCE NAME NATIONAL 10 MG ORAL TABLET",
 						expectedPharmaceutical));
 	}
 
@@ -278,15 +308,18 @@ public class MatchTermHelperTest {
 				"Trade name");
 		// missing component
 		Assert.assertEquals(MatchTermRule.GENERIC_MISSING_ENGLISH_SUBSTANCE,
-				MatchTermHelper.getMatchTermRuleEnglish("Trade name substance A English 10 mg + substance C English 30 dg oral tablet",
+				MatchTermHelper.getMatchTermRuleEnglish(MatchAttributeRule.DOSE_FORM_MISSING_CHECK_CONCEPT,
+						"Trade name substance A English 10 mg + substance C English 30 dg oral tablet",
 						expectedPharmaceutical));
 		// generic incorrect component order
 		Assert.assertEquals(MatchTermRule.GENERIC_INCORRECT_COMPONENT_ORDER_ENGLISH,
-				MatchTermHelper.getMatchTermRuleEnglish("Substance B English 20 cg + substance C English 30 dg + substance A English 10 mg oral tablet",
+				MatchTermHelper.getMatchTermRuleEnglish(MatchAttributeRule.EXACT_MATCH_EXCLUDING_DOSE_FORM,
+						"Substance B English 20 cg + substance C English 30 dg + substance A English 10 mg oral tablet",
 						expectedPharmaceutical));
 		// case insensitive match
 		Assert.assertEquals(MatchTermRule.GENERIC_CASE_INSENSITIVE_ENGLISH_MATCH,
-				MatchTermHelper.getMatchTermRuleEnglish("SUBSTANCE A ENGLISH 10 MG + SUBSTANCE B ENGLISH 20 CG + SUBSTANCE C ENGLISH 30 DG ORAL TABLET",
+				MatchTermHelper.getMatchTermRuleEnglish(MatchAttributeRule.AMBIGUOUS_MATCH_EXCLUDING_DOSE_FORM,
+						"SUBSTANCE A ENGLISH 10 MG + SUBSTANCE B ENGLISH 20 CG + SUBSTANCE C ENGLISH 30 DG ORAL TABLET",
 						expectedPharmaceutical));
 	}
 
@@ -302,31 +335,38 @@ public class MatchTermHelperTest {
 				"Trade name");
 		// generic
 		Assert.assertEquals(MatchTermRule.GENERIC_EXACT_ENGLISH_MATCH,
-				MatchTermHelper.getMatchTermRuleEnglish("Substance name English 10 mg oral tablet",
+				MatchTermHelper.getMatchTermRuleEnglish(MatchAttributeRule.AMBIGUOUS_MATCH,
+						"Substance name English 10 mg oral tablet",
 						expectedPharmaceutical));
 		// generic case-insensitive
 		Assert.assertEquals(MatchTermRule.GENERIC_CASE_INSENSITIVE_ENGLISH_MATCH,
-				MatchTermHelper.getMatchTermRuleEnglish("substance name English 10 mg oral tablet",
+				MatchTermHelper.getMatchTermRuleEnglish(MatchAttributeRule.AMBIGUOUS_MATCH,
+						"substance name English 10 mg oral tablet",
 						expectedPharmaceutical));
 		// undesired component - substance
 		Assert.assertEquals(MatchTermRule.GENERIC_MISSING_ENGLISH_SUBSTANCE,
-				MatchTermHelper.getMatchTermRuleEnglish("Trade name subst4nc3 name English 10 mg oral tablet",
+				MatchTermHelper.getMatchTermRuleEnglish(MatchAttributeRule.AMBIGUOUS_MATCH,
+						"Trade name subst4nc3 name English 10 mg oral tablet",
 						expectedPharmaceutical));
 		// undesired component - strength
 		Assert.assertEquals(MatchTermRule.GENERIC_MISSING_ENGLISH_STRENGTH,
-				MatchTermHelper.getMatchTermRuleEnglish("Trade name substance name English 100 mg oral tablet",
+				MatchTermHelper.getMatchTermRuleEnglish(MatchAttributeRule.AMBIGUOUS_MATCH,
+						"Trade name substance name English 100 mg oral tablet",
 						expectedPharmaceutical));
 		// undesired component - unit
 		Assert.assertEquals(MatchTermRule.GENERIC_MISSING_ENGLISH_UNIT,
-				MatchTermHelper.getMatchTermRuleEnglish("Trade name substance name English 10 kg oral tablet",
+				MatchTermHelper.getMatchTermRuleEnglish(MatchAttributeRule.AMBIGUOUS_MATCH,
+						"Trade name substance name English 10 kg oral tablet",
 						expectedPharmaceutical));
 		// missing dose form
 		Assert.assertEquals(MatchTermRule.GENERIC_MISSING_ENGLISH_DOSE_FORM,
-				MatchTermHelper.getMatchTermRuleEnglish("Trade name substance name English 10mg",
+				MatchTermHelper.getMatchTermRuleEnglish(MatchAttributeRule.AMBIGUOUS_MATCH_EXCLUDING_DOSE_FORM,
+						"Trade name substance name English 10mg",
 						expectedPharmaceutical));
 		// partial dose form
 		Assert.assertEquals(MatchTermRule.GENERIC_PARTIAL_ENGLISH_DOSE_FORM,
-				MatchTermHelper.getMatchTermRuleEnglish("Trade name substance name English 10mg tablet",
+				MatchTermHelper.getMatchTermRuleEnglish(MatchAttributeRule.AMBIGUOUS_MATCH_EXCLUDING_DOSE_FORM,
+						"Trade name substance name English 10mg tablet",
 						expectedPharmaceutical));
 	}
 
@@ -352,19 +392,23 @@ public class MatchTermHelperTest {
 				"Trade name");
 		// missing component
 		Assert.assertEquals(MatchTermRule.GENERIC_MISSING_NATIONAL_SUBSTANCE,
-				MatchTermHelper.getMatchTermRuleNational("Trade name substance A national 10 mg + substance C national 30 dg oral tablet",
+				MatchTermHelper.getMatchTermRuleNational(MatchAttributeRule.DOSE_FORM_MISSING_CHECK_CONCEPT,
+						"Trade name substance A national 10 mg + substance C national 30 dg oral tablet",
 						expectedPharmaceutical));
 		// generic incorrect component order
 		Assert.assertEquals(MatchTermRule.GENERIC_INCORRECT_COMPONENT_ORDER_NATIONAL,
-				MatchTermHelper.getMatchTermRuleNational("Substance B national 20 cg + substance C national 30 dg + substance A national 10 mg oral tablet",
+				MatchTermHelper.getMatchTermRuleNational(MatchAttributeRule.EXACT_MATCH_EXCLUDING_DOSE_FORM,
+						"Substance B national 20 cg + substance C national 30 dg + substance A national 10 mg oral tablet",
 						expectedPharmaceutical));
 		// incorrect component order
 		Assert.assertEquals(MatchTermRule.GENERIC_INCORRECT_COMPONENT_ORDER_NATIONAL,
-				MatchTermHelper.getMatchTermRuleNational("Trade name substance B national 20 cg + substance C national 30 dg + substance A national 10 mg oral tablet",
+				MatchTermHelper.getMatchTermRuleNational(MatchAttributeRule.EXACT_MATCH_EXCLUDING_DOSE_FORM,
+						"Trade name substance B national 20 cg + substance C national 30 dg + substance A national 10 mg oral tablet",
 						expectedPharmaceutical));
 		// case insensitive pharmaceutical match
 		Assert.assertEquals(MatchTermRule.GENERIC_INCORRECT_COMPONENT_ORDER_NATIONAL,
-				MatchTermHelper.getMatchTermRuleNational("TRADE NAME SUBSTANCE A NATIONAL 10 MG + SUBSTANCE B NATIONAL 20 CG + SUBSTANCE C NATIONAL 30 DG ORAL TABLET",
+				MatchTermHelper.getMatchTermRuleNational(MatchAttributeRule.AMBIGUOUS_MATCH_EXCLUDING_DOSE_FORM,
+						"TRADE NAME SUBSTANCE A NATIONAL 10 MG + SUBSTANCE B NATIONAL 20 CG + SUBSTANCE C NATIONAL 30 DG ORAL TABLET",
 						expectedPharmaceutical));
 	}
 
@@ -380,31 +424,38 @@ public class MatchTermHelperTest {
 				"Trade name");
 		// generic
 		Assert.assertEquals(MatchTermRule.GENERIC_EXACT_NATIONAL_MATCH,
-				MatchTermHelper.getMatchTermRuleNational("Substance name national 10 mg oral tablet",
+				MatchTermHelper.getMatchTermRuleNational(MatchAttributeRule.AMBIGUOUS_MATCH,
+						"Substance name national 10 mg oral tablet",
 						expectedPharmaceutical));
 		// generic case-insensitive
 		Assert.assertEquals(MatchTermRule.GENERIC_CASE_INSENSITIVE_NATIONAL_MATCH,
-				MatchTermHelper.getMatchTermRuleNational("substance name national 10 mg oral tablet",
+				MatchTermHelper.getMatchTermRuleNational(MatchAttributeRule.AMBIGUOUS_MATCH,
+						"substance name national 10 mg oral tablet",
 						expectedPharmaceutical));
 		// undesired component - substance
 		Assert.assertEquals(MatchTermRule.GENERIC_MISSING_NATIONAL_SUBSTANCE,
-				MatchTermHelper.getMatchTermRuleNational("Trade name subst4nc3 name national 10 mg oral tablet",
+				MatchTermHelper.getMatchTermRuleNational(MatchAttributeRule.AMBIGUOUS_MATCH,
+						"Trade name subst4nc3 name national 10 mg oral tablet",
 						expectedPharmaceutical));
 		// undesired component - strength
 		Assert.assertEquals(MatchTermRule.GENERIC_MISSING_NATIONAL_STRENGTH,
-				MatchTermHelper.getMatchTermRuleNational("Trade name substance name national 100 mg oral tablet",
+				MatchTermHelper.getMatchTermRuleNational(MatchAttributeRule.AMBIGUOUS_MATCH,
+						"Trade name substance name national 100 mg oral tablet",
 						expectedPharmaceutical));
 		// undesired component - unit
 		Assert.assertEquals(MatchTermRule.GENERIC_MISSING_NATIONAL_UNIT,
-				MatchTermHelper.getMatchTermRuleNational("Trade name substance name national 10 kg oral tablet",
+				MatchTermHelper.getMatchTermRuleNational(MatchAttributeRule.AMBIGUOUS_MATCH,
+						"Trade name substance name national 10 kg oral tablet",
 						expectedPharmaceutical));
 		// missing dose form
 		Assert.assertEquals(MatchTermRule.GENERIC_MISSING_NATIONAL_DOSE_FORM,
-				MatchTermHelper.getMatchTermRuleNational("Trade name substance name national 10mg",
+				MatchTermHelper.getMatchTermRuleNational(MatchAttributeRule.AMBIGUOUS_MATCH_EXCLUDING_DOSE_FORM,
+						"Trade name substance name national 10mg",
 						expectedPharmaceutical));
 		// partial dose form
 		Assert.assertEquals(MatchTermRule.GENERIC_PARTIAL_NATIONAL_DOSE_FORM,
-				MatchTermHelper.getMatchTermRuleNational("Trade name substance name national 10mg tablet",
+				MatchTermHelper.getMatchTermRuleNational(MatchAttributeRule.AMBIGUOUS_MATCH_EXCLUDING_DOSE_FORM,
+						"Trade name substance name national 10mg tablet",
 						expectedPharmaceutical));
 	}
 

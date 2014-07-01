@@ -79,7 +79,8 @@ public class Match {
 				"SCT Concept ID",
 				"SCT Description ID",
 				"SCT Term",
-				"Rule match"
+				"Rule match",
+				"Ambiguous matches"
 		};
 
 	private final VerificationService service;
@@ -107,6 +108,10 @@ public class Match {
 		log.info("Starting \"Match\"");
 		// implicit "Check" dependency
 		this.check.execute();
+		// retrieve Component name to Concept ID
+		this.doseForm2Id = this.check.getDoseForm2Id();
+		this.substance2Id = this.check.getSubstance2Id();
+		this.unit2Id = this.check.getUnit2Id();
 		// attribute match
 		Map<Pharmaceutical, Pair<MatchAttributeRule, List<ConceptSearchResultDescriptor>>> pharmaceutical2AttributeMatch = matchAttributes();
 		if (matchAttributeReport) {
@@ -174,14 +179,11 @@ public class Match {
 		if (attributeIdHasDoseForm == null) {
 			throw new DrugMatchConfigurationException("Unable to proceed, cause: '" + DrugMatchProperties.ATTRIBUTE_ID_HAS_DOSE_FORM + "' isn't set!");
 		} // else
-		Set<Long> attributeIds = new HashSet<>(),
+		Set<Long> allAttributeIds = new HashSet<>(),
+			attributeIdsHasActiveIngredient = Collections.singleton(attributeIdHasActiveIngredient),
 			valueIds;
-		attributeIds.add(attributeIdHasActiveIngredient);
-		attributeIds.add(attributeIdHasDoseForm);
-		// retrieve Component name to Concept ID
-		this.doseForm2Id = this.check.getDoseForm2Id();
-		this.substance2Id = this.check.getSubstance2Id();
-		this.unit2Id = this.check.getUnit2Id();
+		allAttributeIds.add(attributeIdHasActiveIngredient);
+		allAttributeIds.add(attributeIdHasDoseForm);
 		Map<Pharmaceutical, Pair<MatchAttributeRule, List<ConceptSearchResultDescriptor>>> result = new LinkedHashMap<>(this.pharmaceuticals.size());
 		Long doseFormId,
 			substanceId;
@@ -213,23 +215,25 @@ public class Match {
 				}
 			}
 			if (rule == null) {
-				// exact attributes minus unit(s)
-				matches = this.service.getAttributeExactMatch(attributeIds, valueIds);
+				// exact attributes
+				matches = this.service.getAttributeExactMatch(allAttributeIds,
+						valueIds);
 				if (matches.isEmpty()) {
 					// exact substances only
 					valueIds.remove(doseFormId);
-					matches = this.service.getAttributeExactMatch(attributeIds, valueIds);
+					matches = this.service.getAttributeExactMatch(attributeIdsHasActiveIngredient,
+							valueIds);
 					if (matches.isEmpty()) {
 						rule = MatchAttributeRule.ZERO_MATCH;
 					} else if (matches.size() == 1) {
-						rule = MatchAttributeRule.EXACT_MATCH_EXCLUDING_DOSE_FORM_AND_UNIT;
+						rule = MatchAttributeRule.EXACT_MATCH_EXCLUDING_DOSE_FORM;
 					} else {
-						rule = MatchAttributeRule.AMBIGUOUS_MATCH_EXCLUDING_DOSE_FORM_AND_UNIT;
+						rule = MatchAttributeRule.AMBIGUOUS_MATCH_EXCLUDING_DOSE_FORM;
 					}
 				} else if (matches.size() == 1) {
-					rule = MatchAttributeRule.EXACT_MATCH_EXCLUDING_UNIT;
+					rule = MatchAttributeRule.EXACT_MATCH;
 				} else {
-					rule = MatchAttributeRule.AMBIGUOUS_MATCH_EXCLUDING_UNIT;
+					rule = MatchAttributeRule.AMBIGUOUS_MATCH;
 				}
 			} else {
 				matches = Collections.emptyList();
@@ -259,16 +263,20 @@ public class Match {
 		Map<MatchTermRule, List<DescriptionDescriptor>> termRule2Matches;
 		String matchTerm,
 			nationalNamespaceId = DrugMatchProperties.getNationalNamespaceId();
-		MatchTermRule rule = null;
+		MatchAttributeRule attributeRule;
+		MatchTermRule termRule = null;
 		for (Map.Entry<Pharmaceutical, Pair<MatchAttributeRule, List<ConceptSearchResultDescriptor>>> entry : pharmaceutical2Match.entrySet()) {
 			pharmaceutical = entry.getKey();
+			attributeRule = entry.getValue().getKey();
 			attributeMatches = entry.getValue().getValue();
 			if (attributeMatches == null
 					|| attributeMatches.isEmpty()) {
 				result.put(pharmaceutical,
-						Pair.of(new PharmaceuticalMatch(null,
+						Pair.of(new PharmaceuticalMatch(Collections.<DescriptionDescriptor>emptyList(),
+										null,
 										MatchTermRule.ZERO_ATTRIBUTE_MATCH),
-								new GenericMatch(null,
+								new GenericMatch(Collections.<DescriptionDescriptor>emptyList(),
+										null,
 										MatchTermRule.ZERO_ATTRIBUTE_MATCH)));
 			} else {
 				conceptIds = new HashSet<>(attributeMatches.size());
@@ -278,7 +286,7 @@ public class Match {
 				termRule2Matches = new HashMap<>();
 				for (ConceptDescriptor conceptDescriptor : this.service.getConceptsByIds(conceptIds)) {
 					for (DescriptionDescriptor descriptionDescriptor : conceptDescriptor.descriptionDescriptor) {
-						rule = null;
+						termRule = null;
 						matchTerm = descriptionDescriptor.descriptionTerm;
 						if (DescriptionType.FULLY_SPECIFIED_NAME.getId() == descriptionDescriptor.descriptionType.intValue()) {
 							matchTerm = matchTerm.substring(0, matchTerm.lastIndexOf('(') - 1); // remove embedded hierarchy
@@ -287,31 +295,35 @@ public class Match {
 						matchTerm = StringUtils.normalizeSpace(matchTerm);
 						// national
 						if (nationalNamespaceId.equals(descriptionDescriptor.getNamespaceId())) {
-							rule = MatchTermHelper.getMatchPharmaceuticalRuleNational(matchTerm,
+							termRule = MatchTermHelper.getMatchPharmaceuticalRuleNational(attributeRule,
+									matchTerm,
 									pharmaceutical);
-							if (rule == null) {
-								rule = MatchTermHelper.getMatchTermRuleNational(matchTerm,
+							if (termRule == null) {
+								termRule = MatchTermHelper.getMatchTermRuleNational(attributeRule,
+										matchTerm,
 										pharmaceutical);
 							}
 						}
 						// generic English
-						if (rule == null
+						if (termRule == null
 								&& descriptionDescriptor.descriptionLocale.startsWith("en")) {
-							rule = MatchTermHelper.getMatchPharmaceuticalRuleEnglish(matchTerm,
+							termRule = MatchTermHelper.getMatchPharmaceuticalRuleEnglish(attributeRule,
+									matchTerm,
 									pharmaceutical);
-							if (rule == null) {
-								rule = MatchTermHelper.getMatchTermRuleEnglish(matchTerm,
+							if (termRule == null) {
+								termRule = MatchTermHelper.getMatchTermRuleEnglish(attributeRule,
+										matchTerm,
 										pharmaceutical);
 							}
 						}
 						// fall back
-						if (rule == null) {
-							rule = MatchTermRule.ZERO_TERM_MATCH;
+						if (termRule == null) {
+							termRule = MatchTermRule.ZERO_TERM_MATCH;
 						}
-						termMatches = termRule2Matches.get(rule);
+						termMatches = termRule2Matches.get(termRule);
 						if (termMatches == null) {
 							termMatches = new ArrayList<>();
-							termRule2Matches.put(rule, termMatches);
+							termRule2Matches.put(termRule, termMatches);
 						}
 						termMatches.add(descriptionDescriptor);
 					}
@@ -357,10 +369,10 @@ public class Match {
 					}
 					if (conceptId2DescriptionDescriptors.size() == 1) {
 						descriptor = conceptId2DescriptionDescriptors.values().iterator().next().first();
-						rule = matchTermRule;
 					} else {
-						rule = MatchTermRule.AMBIGUOUS_MATCH;
+						descriptor = null;
 					}
+					rule = matchTermRule;
 				} else if (MatchTermRule.ZERO_TERM_MATCH.equals(matchTermRule)) {
 					rule = MatchTermRule.ZERO_TERM_MATCH;
 				}
@@ -369,11 +381,15 @@ public class Match {
 					if (rule.isGeneric()
 							&& genericMatch == null) {
 						// only save first match!
-						genericMatch = new GenericMatch(descriptor, rule);
+						genericMatch = new GenericMatch(termMatches,
+								descriptor,
+								rule);
 					} else if (!rule.isGeneric()
 							&& pharmaceuticalMatch == null) {
 						// only save first match!
-						pharmaceuticalMatch = new PharmaceuticalMatch(descriptor, rule);
+						pharmaceuticalMatch = new PharmaceuticalMatch(termMatches,
+								descriptor,
+								rule);
 					}
 				}
 			}
@@ -406,17 +422,25 @@ public class Match {
 			String[] columns;
 			List<ConceptSearchResultDescriptor> matches;
 			ConceptSearchResultDescriptor descriptor;
+			SortedSet<Long> conceptIds;
 			for (Map.Entry<Pharmaceutical, Pair<MatchAttributeRule, List<ConceptSearchResultDescriptor>>> entry : pharmaceutical2Match.entrySet()) {
-				columns = new String[6];
+				columns = new String[7];
 				columns[0] = entry.getKey().drugId;
 				columns[1] = entry.getKey().tradeName;
 				matches = entry.getValue().getValue();
-				if (matches != null
-						&& matches.size() == 1) {
-					descriptor = matches.iterator().next();
-					columns[2] = descriptor.conceptCode;
-					columns[3] = descriptor.healthtermDescriptionId.toString();
-					columns[4] = descriptor.descriptionTerm;
+				if (matches != null) {
+					if (matches.size() == 1) {
+						descriptor = matches.iterator().next();
+						columns[2] = descriptor.conceptCode;
+						columns[3] = descriptor.healthtermDescriptionId.toString();
+						columns[4] = descriptor.descriptionTerm;
+					} else if (matches.size() > 1) {
+						conceptIds = new TreeSet<>();
+						for (ConceptSearchResultDescriptor match : matches) {
+							conceptIds.add(match.healthtermConceptId);
+						}
+						columns[6] = this.service.getConceptsByIdsUrl(conceptIds);
+					}
 				}
 				columns[5] = entry.getValue().getKey().toString();
 				writer.writeNext(columns);
@@ -446,23 +470,29 @@ public class Match {
 			writer.writeNext(REPORT_HEADER);
 			// content
 			String[] columns;
+			PharmaceuticalMatch pharmaceuticalMatch;
+			GenericMatch genericMatch;
 			DescriptionDescriptor descriptor;
 			MatchTermRule rule;
+			List<DescriptionDescriptor> ambiguousDescriptors;
+			SortedSet<Long> conceptIds;
 			for (Map.Entry<Pharmaceutical, Pair<PharmaceuticalMatch, GenericMatch>> entry : getPharmaceutical2TermMatches().entrySet()) {
-				columns = new String[6];
+				columns = new String[7];
 				columns[0] = entry.getKey().drugId;
 				columns[1] = entry.getKey().tradeName;
 				// SCT columns
-				if (entry.getValue().getKey() == null
-						|| entry.getValue().getKey().descriptor == null) {
-					if (entry.getValue().getValue() == null
-							|| entry.getValue().getValue().descriptor == null) {
+				pharmaceuticalMatch = entry.getValue().getKey();
+				genericMatch = entry.getValue().getValue();
+				if (pharmaceuticalMatch == null
+						|| pharmaceuticalMatch.descriptor == null) {
+					if (genericMatch == null
+							|| genericMatch.descriptor == null) {
 						descriptor = null;
 					} else {
-						descriptor = entry.getValue().getValue().descriptor;
+						descriptor = genericMatch.descriptor;
 					}
 				} else {
-					descriptor = entry.getValue().getKey().descriptor;
+					descriptor = pharmaceuticalMatch.descriptor;
 				}
 				if (descriptor != null) {
 					columns[2] = descriptor.conceptId.toString();
@@ -470,21 +500,42 @@ public class Match {
 					columns[4] = descriptor.descriptionTerm;
 				}
 				// rule
-				if (entry.getValue().getKey() == null
-						|| entry.getValue().getKey().rule == null) {
-					if (entry.getValue().getValue() == null
-							|| entry.getValue().getValue().rule == null) {
+				if (pharmaceuticalMatch == null
+						|| pharmaceuticalMatch.rule == null) {
+					if (genericMatch == null
+							|| genericMatch.rule == null) {
 						rule = null;
 					} else {
-						rule = entry.getValue().getValue().rule;
+						rule = genericMatch.rule;
 					}
 				} else {
-					rule = entry.getValue().getKey().rule;
+					rule = pharmaceuticalMatch.rule;
 				}
 				if (MatchTermRule.ZERO_ATTRIBUTE_MATCH.equals(rule)) {
 					columns[5] = this.matchRuleHelper.getMessage(pharmaceutical2AttributeMatch.get(entry.getKey()).getKey());
 				} else {
-					columns[5] = this.matchRuleHelper.getMessage(rule);
+					if (descriptor == null) {
+						columns[5] = this.matchRuleHelper.getAmbiguousMessage(rule);
+						// ambiguous
+						if (pharmaceuticalMatch == null) {
+							if (genericMatch == null) {
+								ambiguousDescriptors = null;
+							} else {
+								ambiguousDescriptors = genericMatch.ambiguousDescriptors;
+							}
+						} else {
+							ambiguousDescriptors = pharmaceuticalMatch.ambiguousDescriptors;
+						}
+						if (ambiguousDescriptors != null) {
+							conceptIds = new TreeSet<>();
+							for (DescriptionDescriptor ambiguousDescriptor : ambiguousDescriptors) {
+								conceptIds.add(ambiguousDescriptor.conceptId);
+							}
+							columns[6] = this.service.getConceptsByIdsUrl(conceptIds);
+						}
+					} else {
+						columns[5] = this.matchRuleHelper.getMessage(rule);
+					}
 				}
 				writer.writeNext(columns);
 			}

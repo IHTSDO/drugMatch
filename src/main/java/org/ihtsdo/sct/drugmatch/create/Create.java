@@ -471,30 +471,34 @@ public class Create {
 	 * @throws IOException
 	 */
 	private void exportMapping(final Map<Pharmaceutical, String> pharmaceutical2ConceptId) throws DrugMatchConfigurationException, IOException {
-		log.info("Starting \"Create\" mapping export");
-		String fullFileName = DrugMatchProperties.getMappingDirectory().getPath() + File.separator + "mapping_" + this.isoNow + ".csv";
-		String quoteCharacter = DrugMatchProperties.getFileContentQuoteCharacter();
-		char quoteChar = (quoteCharacter == null) ? CSVWriter.NO_QUOTE_CHARACTER : quoteCharacter.charAt(0);
-		try (CSVWriter writer = new CSVWriter(new OutputStreamWriter(new FileOutputStream(fullFileName),
-				CharEncoding.UTF_8),
-				Check.getOutputFileContentSeparator(),
-				quoteChar)) {
-			// header
-			writer.writeNext(new String[] {
-					"Drug ID",
-					"SCT Concept ID"
-			});
-			// content
-			for (Map.Entry<Pharmaceutical, String> entry : pharmaceutical2ConceptId.entrySet()) {
+		if (pharmaceutical2ConceptId.size() > 0) {
+			log.info("Starting \"Create\" mapping export");
+			String fullFileName = DrugMatchProperties.getMappingDirectory().getPath() + File.separator + "mapping_" + this.isoNow + ".csv";
+			String quoteCharacter = DrugMatchProperties.getFileContentQuoteCharacter();
+			char quoteChar = (quoteCharacter == null) ? CSVWriter.NO_QUOTE_CHARACTER : quoteCharacter.charAt(0);
+			try (CSVWriter writer = new CSVWriter(new OutputStreamWriter(new FileOutputStream(fullFileName),
+					CharEncoding.UTF_8),
+					Check.getOutputFileContentSeparator(),
+					quoteChar)) {
+				// header
 				writer.writeNext(new String[] {
-						entry.getKey().drugId,
-						entry.getValue()
+						"Drug ID",
+						"SCT Concept ID"
 				});
+				// content
+				for (Map.Entry<Pharmaceutical, String> entry : pharmaceutical2ConceptId.entrySet()) {
+					writer.writeNext(new String[] {
+							entry.getKey().drugId,
+							entry.getValue()
+					});
+				}
+				writer.flush();
+				log.info("Created {}", fullFileName);
 			}
-			writer.flush();
-			log.info("Created {}", fullFileName);
+			log.info("Completed \"Create\" mapping export");
+		} else {
+			log.debug("Skipping mapping export, cause: no data available");
 		}
-		log.info("Completed \"Create\" mapping export");
 	}
 
 	/**
@@ -744,7 +748,8 @@ public class Create {
 						}
 					}
 				}
-				if (conceptId == null && eglible(entry.getKey())) {
+				if (conceptId == null
+						&& eglible(entry.getKey())) {
 					// determine if generic parent is matched
 					if (MatchTermRule.GENERIC_EXACT_ENGLISH_MATCH.equals(termMatch.getValue().rule)
 							|| MatchTermRule.GENERIC_EXACT_NATIONAL_MATCH.equals(termMatch.getValue().rule)

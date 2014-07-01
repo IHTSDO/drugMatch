@@ -34,6 +34,14 @@ public interface VerificationService {
 	List<ConceptDescriptor> getConceptsByIds(Set<Long> conceptIds) throws DrugMatchConfigurationException, IOException;
 
 	/**
+	 * Generate link to Concept presentation.
+	 * @param conceptIds
+	 * @return URL as String
+	 * @throws DrugMatchConfigurationException
+	 */
+	String getConceptsByIdsUrl(Set<Long> conceptIds) throws DrugMatchConfigurationException;
+
+	/**
 	 * Retrieve exact preferred term (active & published) match(es) with English language code, under the {@link DrugMatchProperties#getConstraintIdDoseForm()} top point.
 	 * @param query
 	 * @return {@link List}({@link ConceptSearchResultDescriptor})

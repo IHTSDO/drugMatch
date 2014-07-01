@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
+import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
@@ -336,7 +337,8 @@ public class Check {
 					"SCT Concept ID",
 					"SCT Description ID",
 					"SCT Term",
-					"Rule match"
+					"Rule match",
+					"Ambiguous matches"
 			};
 			writer.writeNext(columns);
 			// content
@@ -438,20 +440,28 @@ public class Check {
 	 * @param nationalDescriptors
 	 * @param matchDescriptors
 	 * @return report columns
+	 * @throws DrugMatchConfigurationException 
 	 */
 	public final String[] getColumns(final String drugId,
 			final String componentName,
 			final List<ConceptSearchResultDescriptor> nationalDescriptors,
-			final List<ConceptSearchResultDescriptor> matchDescriptors) {
-		String[] columns = new String[6];
+			final List<ConceptSearchResultDescriptor> matchDescriptors) throws DrugMatchConfigurationException {
+		String[] columns = new String[7];
 		columns[0] = drugId;
 		columns[1] = componentName;
-		if (matchDescriptors != null
-				&& matchDescriptors.size() == 1) {
-			ConceptSearchResultDescriptor descriptor = matchDescriptors.iterator().next();
-			columns[2] = descriptor.conceptCode;
-			columns[3] = descriptor.healthtermDescriptionId.toString();
-			columns[4] = descriptor.descriptionTerm;
+		if (matchDescriptors != null) {
+			if (matchDescriptors.size() == 1) {
+				ConceptSearchResultDescriptor descriptor = matchDescriptors.iterator().next();
+				columns[2] = descriptor.conceptCode;
+				columns[3] = descriptor.healthtermDescriptionId.toString();
+				columns[4] = descriptor.descriptionTerm;
+			} else if (matchDescriptors.size() > 1) {
+				SortedSet<Long> conceptIds = new TreeSet<>();
+				for (ConceptSearchResultDescriptor descriptor : matchDescriptors) {
+					conceptIds.add(descriptor.healthtermConceptId);
+				}
+				columns[6] = this.service.getConceptsByIdsUrl(conceptIds);
+			}
 		}
 		columns[5] = this.checkValidation.getMessage(getRule(componentName,
 				nationalDescriptors,

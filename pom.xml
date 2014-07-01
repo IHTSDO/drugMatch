@@ -6,7 +6,7 @@
 	<artifactId>ihtsdo-sct-drugmatch</artifactId>
 	<groupId>org.ihtsdo.sct.drugmatch</groupId>
 	<packaging>jar</packaging>
-	<version>1.0-MILESTONE_6-ALPHA-RELEASE_1</version>
+	<version>1.0-MILESTONE_6-BETA-RELEASE_1</version>
 	<name>${project.artifactId}</name>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -37,8 +37,8 @@
 							<language>java</language>
 							<packageName>org.ihtsdo.sct.id.service</packageName>
 							<!-- local copy created 2014-05-16 16:43, source: https://release.ihtsdotools.org/axis2/services/id_generator?wsdl -->
-<!-- BACKUP							<wsdlFile>src/main/resource/ihtsdo_sct_id_service_20140516.wdsl</wsdlFile> -->
-							<wsdlFile>https://release.ihtsdotools.org/axis2/services/id_generator?wsdl</wsdlFile>
+<!-- BACKUP							<wsdlFile>src/main/resource/ihtsdo_sct_id_service_20140624.wdsl</wsdlFile> -->
+							<wsdlFile>https://uat-release.ihtsdotools.org/axis2/services/id_generator?wsdl</wsdlFile>
 						</configuration>
 					</execution>
 				</executions>
@@ -209,7 +209,7 @@
 		</dependency>
 	</dependencies>
 	<description>
-		Tool preparing missing, national and generic, pharmaceutical content for import into SNOMED CT.
+		Tool preparing missing pharmaceutical content, both national and generic, for import into SNOMED CT.
 	</description>
 	<developers>
 		<developer>

@@ -28,9 +28,9 @@ public class MatchRuleHelperDanishImpl implements MatchRuleHelper {
 	static {
 		Map<MatchAttributeRule, String> tmpAttributeRuleResult = new HashMap<>();
 
-		tmpAttributeRuleResult.put(MatchAttributeRule.EXACT_MATCH_EXCLUDING_DOSE_FORM_AND_UNIT, "Product with substances found");
+		tmpAttributeRuleResult.put(MatchAttributeRule.EXACT_MATCH_EXCLUDING_DOSE_FORM, "Product with substances found");
 
-		tmpAttributeRuleResult.put(MatchAttributeRule.EXACT_MATCH_EXCLUDING_UNIT, "Product with substances and dose form found");
+		tmpAttributeRuleResult.put(MatchAttributeRule.EXACT_MATCH, "Product with substances and dose form found");
 
 		MATCH_ATTRIBUTE_RULE_2_VIOLATION_MESSAGE = Collections.unmodifiableMap(tmpAttributeRuleResult);
 
@@ -48,6 +48,14 @@ public class MatchRuleHelperDanishImpl implements MatchRuleHelper {
 		tmpTermRuleResult.put(MatchTermRule.ZERO_TERM_MATCH, "Product missing");
 
 		MATCH_TERM_RULE_2_VIOLATION_MESSAGE = Collections.unmodifiableMap(tmpTermRuleResult);
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	public final String getAmbiguousMessage(MatchTermRule matchTermRule) {
+		String violationMessage = MATCH_TERM_RULE_2_VIOLATION_MESSAGE.get(matchTermRule);
+		return (violationMessage == null) ? "AMBIGUOUS_" + matchTermRule.toString() : violationMessage + " (ambiguous)";
 	}
 
 	/**

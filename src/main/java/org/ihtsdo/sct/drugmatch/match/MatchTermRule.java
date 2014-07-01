@@ -53,8 +53,6 @@ public enum MatchTermRule {
 	GENERIC_MISSING_ENGLISH_STRENGTH(-50, true),
 
 
-	AMBIGUOUS_MATCH(-75, true),
-
 	ZERO_TERM_MATCH(-100, true),
 
 	ZERO_ATTRIBUTE_MATCH(-200, true);

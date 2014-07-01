@@ -1,6 +1,6 @@
 # IHTSDO DrugMatch
 
-Tool preparing missing, national and generic, pharmaceutical content for import into SNOMED CT (a.k.a. SCT).
+Tool preparing missing pharmaceutical content, both national and generic, for import into SNOMED CT (a.k.a. SCT).
 
 ## Getting started
 
