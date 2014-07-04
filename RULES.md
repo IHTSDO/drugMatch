@@ -1,0 +1,83 @@
+# IHTSDO DrugMatch Rules
+
+Descriptions to be added in due time
+
+##CheckRule
+
+**AMBIGUOUS_MATCH** - description
+
+**CASE_INSENSITIVE_MATCH** - description
+
+**COMPONENT_AND_TERM_MISMATCH** - description
+
+**EXACT_MATCH** - description
+
+**TRANSLATION_MISSING** - description
+
+**UNCHECKED** - description
+
+**ZERO_MATCH** - description
+
+##MatchAttribute
+
+**AMBIGUOUS_MATCH** - description
+
+**AMBIGUOUS_MATCH_EXCLUDING_DOSE_FORM** - description
+
+**EXACT_MATCH** - description
+
+**EXACT_MATCH_EXCLUDING_DOSE_FORM** - description
+
+**DOSE_FORM_MISSING_CHECK_CONCEPT** - description
+
+**SUBSTANCE_MISSING_CHECK_CONCEPT** - description
+
+**ZERO_MATCH** - description
+
+	
+##MatchTermRule
+
+**PHARMACEUTICAL_EXACT_NATIONAL_MATCH** - description
+
+**PHARMACEUTICAL_CASE_INSENSITIVE_NATIONAL_MATCH** - description
+
+**PHARMACEUTICAL_INCORRECT_COMPONENT_ORDER_NATIONAL** - description
+
+**GENERIC_EXACT_NATIONAL_MATCH** - description
+
+**GENERIC_EXACT_ENGLISH_MATCH** - description
+
+**GENERIC_CASE_INSENSITIVE_NATIONAL_MATCH** - description
+
+**GENERIC_CASE_INSENSITIVE_ENGLISH_MATCH** - description
+
+**GENERIC_INCORRECT_COMPONENT_ORDER_NATIONAL** - description
+
+**PHARMACEUTICAL_PARTIAL_TRADE_NAME_NATIONAL** - description
+
+**GENERIC_PARTIAL_NATIONAL_DOSE_FORM** - description
+
+**GENERIC_MISSING_NATIONAL_SUBSTANCE** - description
+
+**GENERIC_MISSING_NATIONAL_DOSE_FORM** - description
+
+**GENERIC_MISSING_NATIONAL_UNIT** - description
+
+**GENERIC_MISSING_NATIONAL_STRENGTH** - description
+
+**GENERIC_INCORRECT_COMPONENT_ORDER_ENGLISH** - description
+
+**GENERIC_PARTIAL_ENGLISH_DOSE_FORM** - description
+
+**GENERIC_MISSING_ENGLISH_SUBSTANCE** - description
+
+**GENERIC_MISSING_ENGLISH_DOSE_FORM** - description
+
+**GENERIC_MISSING_ENGLISH_UNIT** - description
+
+**GENERIC_MISSING_ENGLISH_STRENGTH** - description
+
+**ZERO_TERM_MATCH** - description
+
+**ZERO_ATTRIBUTE_MATCH** - description
+
