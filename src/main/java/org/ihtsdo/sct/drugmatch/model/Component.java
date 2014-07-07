@@ -85,7 +85,6 @@ public class Component implements Serializable {
 		return new StringBuilder(this.substance.getNormalizedNameEnglish())
 			.append(" ")
 			.append(getStrengthEnglish(this.strength))
-			.append(" ")
 			.append(this.unit)
 			.toString();
 	}

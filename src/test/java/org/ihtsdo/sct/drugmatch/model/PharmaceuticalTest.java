@@ -33,14 +33,20 @@ public class PharmaceuticalTest {
 	}
 
 	@Test
+	public final void getEnglishPharmaceuticalTerm() {
+		Assert.assertEquals("tradeName substance name English_1 strength_1unit_1 + substance name English_2 strength_2unit_2 dose form English",
+				PHARMACEUTICAL.getEnglishPharmaceuticalTerm());
+	}
+
+	@Test
 	public final void getEnglishTerm() {
-		Assert.assertEquals("Substance name English_1 strength_1 unit_1 + substance name English_2 strength_2 unit_2 dose form English",
+		Assert.assertEquals("Substance name English_1 strength_1unit_1 + substance name English_2 strength_2unit_2 dose form English",
 				PHARMACEUTICAL.getEnglishTerm());
 	}
 
 	@Test
 	public final void getGenericUUID() throws UnsupportedEncodingException {
-		Assert.assertEquals("88978602-4566-3bc3-9724-e39e36b779ee",
+		Assert.assertEquals("a5f81fff-2b2f-30b8-8013-82f4170f7a51",
 				PHARMACEUTICAL.getGenericUUID().toString());
 		// "random" component order
 		List<Component> reversedComponents = new ArrayList<>(PHARMACEUTICAL.components);
@@ -54,6 +60,12 @@ public class PharmaceuticalTest {
 				pharmaceuticalWithReversedComponents.getEnglishTerm());
 		Assert.assertEquals(PHARMACEUTICAL.getGenericUUID().toString(),
 				pharmaceuticalWithReversedComponents.getGenericUUID().toString());
+	}
+
+	@Test
+	public final void getNationalPharmaceuticalTerm() {
+		Assert.assertEquals("tradeName substance name national_1 strength_1 unit_1 + substance name national_2 strength_2 unit_2 dose form national",
+				PHARMACEUTICAL.getNationalPharmaceuticalTerm());
 	}
 
 	@Test
@@ -74,20 +86,14 @@ public class PharmaceuticalTest {
 	}
 
 	@Test
-	public final void getPharmaceuticalTerm() {
-		Assert.assertEquals("tradeName substance name national_1 strength_1 unit_1 + substance name national_2 strength_2 unit_2 dose form national",
-				PHARMACEUTICAL.getPharmaceuticalTerm());
-	}
-
-	@Test
 	public final void getPharmaceuticalUUID() throws UnsupportedEncodingException {
-		Assert.assertEquals("5e85a530-3858-35cb-8e0e-a9b5825a0a03",
+		Assert.assertEquals("f32b0752-7d55-3bc4-96b6-d2bc2fe3738b",
 				PHARMACEUTICAL.getPharmaceuticalUUID().toString());
 		// "random" component order
 		List<Component> reversedComponents = new ArrayList<>(PHARMACEUTICAL.components);
 		Collections.reverse(reversedComponents);
 		Pharmaceutical pharmaceuticalWithReversedComponents = new Pharmaceutical(reversedComponents,
-				null,
+				PHARMACEUTICAL.doseForm.nameEnglish,
 				PHARMACEUTICAL.doseForm.nameNational,
 				PHARMACEUTICAL.drugId,
 				PHARMACEUTICAL.tradeName);

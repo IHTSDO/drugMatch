@@ -42,6 +42,11 @@ public final class ReleaseFormat2 {
 
 	public static final String NAMESPACE_CORE_ID = "0";
 
+	/**
+	 * CR+LF
+	 */
+	public static final String NEW_LINE = "\r\n";
+
 	public static final String PARTITION_EXTENSION_CONCEPT_ID = "10",
 			PARTITION_EXTENSION_DESCRIPTION_ID = "11",
 			PARTITION_EXTENSION_RELATIONSHIP_ID = "12";

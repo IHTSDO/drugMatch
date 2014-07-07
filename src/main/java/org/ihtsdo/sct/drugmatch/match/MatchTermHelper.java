@@ -163,7 +163,7 @@ public final class MatchTermHelper {
 	public static MatchTermRule getMatchPharmaceuticalRuleNational(final MatchAttributeRule matchAttributeRule,
 			final String term,
 			final Pharmaceutical pharmaceutical) {
-		if (pharmaceutical.getPharmaceuticalTerm().equals(term)) {
+		if (pharmaceutical.getNationalPharmaceuticalTerm().equals(term)) {
 			return MatchTermRule.PHARMACEUTICAL_EXACT_NATIONAL_MATCH;
 		} // else
 		Pharmaceutical termPharmaceutical = MatchTermHelper.getTermPharmaceutical(term,

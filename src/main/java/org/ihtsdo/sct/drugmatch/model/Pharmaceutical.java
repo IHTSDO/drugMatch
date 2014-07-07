@@ -101,8 +101,20 @@ public class Pharmaceutical implements Serializable {
 	}
 
 	/**
+	 * Ex. "National TradeName azathioprine 120 mg + codeine phosphate 12 mg oral dosage form"
+	 * @return English pharmaceutical preferred term
+	 * @see {@link #getEnglishTerm()}
+	 */
+	public final String getEnglishPharmaceuticalTerm() {
+		return new StringBuilder(getNormalizedTradeName())
+			.append(" ")
+			.append(StringUtils.uncapitalize(getEnglishTerm()))
+			.toString();
+	}
+
+	/**
 	 * Ex. "Azathioprine 120 mg + codeine phosphate 12 mg oral dosage form"
-	 * @return Generic English term
+	 * @return English generic preferred term
 	 */
 	public final String getEnglishTerm() {
 		StringBuilder term = new StringBuilder();
@@ -133,9 +145,20 @@ public class Pharmaceutical implements Serializable {
 	}
 
 	/**
-	 * Generate national term.<br>
+	 * Ex. "Solpadol paracetamol 120 mg + codeinphosphat 12 mg oral doseringsform"
+	 * @return national pharmaceutical preferred term
+	 * @see {@link #getNationalTerm()}
+	 */
+	public final String getNationalPharmaceuticalTerm() {
+		return new StringBuilder(getNormalizedTradeName())
+			.append(" ")
+			.append(StringUtils.uncapitalize(getNationalTerm()))
+			.toString();
+	}
+
+	/**
 	 * Ex. "Paracetamol 120 mg + codeinphosphat 12 mg oral doseringsform"
-	 * @return {@link #components} {@link #doseForm}
+	 * @return national preferred term
 	 */
 	public final String getNationalTerm() {
 		StringBuilder term = new StringBuilder();
@@ -162,18 +185,6 @@ public class Pharmaceutical implements Serializable {
 	}
 
 	/**
-	 * Ex. "Solpadol paracetamol 120 mg + codeinphosphat 12 mg oral doseringsform"
-	 * @return national pharmaceutical term
-	 * @see {@link #getNationalTerm()}
-	 */
-	public final String getPharmaceuticalTerm() {
-		return new StringBuilder(getNormalizedTradeName())
-			.append(" ")
-			.append(StringUtils.uncapitalize(getNationalTerm()))
-			.toString();
-	}
-
-	/**
 	 * Generate repeatable {@link UUID} based on {@link Pharmaceutical#drugId}, {@link Pharmaceutical#tradeName}, national {@link Pharmaceutical#components} & national {@link Pharmaceutical#doseForm}.
 	 * @return {@link UUID} v3
 	 * @throws UnsupportedEncodingException
@@ -183,8 +194,7 @@ public class Pharmaceutical implements Serializable {
 		List<String> tokens = new ArrayList<>();
 		// ensure whitespace doesn't affect resulting hash
 		tokens.addAll(Arrays.asList(this.drugId.split(Constant.REGEX_WHITESPACE_GREEDY)));
-		tokens.addAll(Arrays.asList(this.tradeName.split(Constant.REGEX_WHITESPACE_GREEDY)));
-		tokens.addAll(Arrays.asList(getPharmaceuticalTerm().split(Constant.REGEX_WHITESPACE_GREEDY)));
+		tokens.addAll(Arrays.asList(getEnglishPharmaceuticalTerm().split(Constant.REGEX_WHITESPACE_GREEDY)));
 		return nameUUIDFromList(tokens);
 	}
 

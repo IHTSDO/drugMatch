@@ -6,7 +6,7 @@
 	<artifactId>ihtsdo-sct-drugmatch</artifactId>
 	<groupId>org.ihtsdo.sct.drugmatch</groupId>
 	<packaging>jar</packaging>
-	<version>1.0-MILESTONE_6-BETA-RELEASE_1</version>
+	<version>1.0-MILESTONE_6-BETA-RELEASE_2</version>
 	<name>${project.artifactId}</name>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -37,8 +37,8 @@
 							<language>java</language>
 							<packageName>org.ihtsdo.sct.id.service</packageName>
 							<!-- local copy created 2014-05-16 16:43, source: https://release.ihtsdotools.org/axis2/services/id_generator?wsdl -->
-<!-- BACKUP							<wsdlFile>src/main/resource/ihtsdo_sct_id_service_20140624.wdsl</wsdlFile> -->
-							<wsdlFile>https://uat-release.ihtsdotools.org/axis2/services/id_generator?wsdl</wsdlFile>
+<!-- BACKUP							<wsdlFile>src/main/resource/ihtsdo_sct_id_service_20140702.wdsl</wsdlFile> -->
+							<wsdlFile>http://mgr.servers.aceworkspace.net:50002/axis2/services/id_generator?wsdl</wsdlFile> <!-- WSDL reference: Kai Kewley (20140702, kke@ihtsdo.org) -->
 						</configuration>
 					</execution>
 				</executions>

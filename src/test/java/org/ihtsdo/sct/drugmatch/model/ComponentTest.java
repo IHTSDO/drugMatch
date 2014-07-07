@@ -15,7 +15,7 @@ public class ComponentTest {
 
 	@Test
 	public final void getEnglish() {
-		Assert.assertEquals("substanceNameEnglish 0.1 unit",
+		Assert.assertEquals("substanceNameEnglish 0.1unit",
 				COMPONENT.getEnglish());
 	}
 

@@ -329,7 +329,8 @@ public class Check {
 		try (CSVWriter writer = new CSVWriter(new OutputStreamWriter(new FileOutputStream(fullFileName),
 						CharEncoding.UTF_8),
 				getOutputFileContentSeparator(),
-				quoteChar)) {
+				quoteChar,
+				System.lineSeparator())) {
 			// header
 			String[] columns = new String[] {
 					"Drug ID",

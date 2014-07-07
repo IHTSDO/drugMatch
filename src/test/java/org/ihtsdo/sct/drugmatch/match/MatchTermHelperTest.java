@@ -319,7 +319,7 @@ public class MatchTermHelperTest {
 		// case insensitive match
 		Assert.assertEquals(MatchTermRule.GENERIC_CASE_INSENSITIVE_ENGLISH_MATCH,
 				MatchTermHelper.getMatchTermRuleEnglish(MatchAttributeRule.AMBIGUOUS_MATCH_EXCLUDING_DOSE_FORM,
-						"SUBSTANCE A ENGLISH 10 MG + SUBSTANCE B ENGLISH 20 CG + SUBSTANCE C ENGLISH 30 DG ORAL TABLET",
+						"SUBSTANCE A ENGLISH 10MG + SUBSTANCE B ENGLISH 20CG + SUBSTANCE C ENGLISH 30DG ORAL TABLET",
 						expectedPharmaceutical));
 	}
 
@@ -336,12 +336,12 @@ public class MatchTermHelperTest {
 		// generic
 		Assert.assertEquals(MatchTermRule.GENERIC_EXACT_ENGLISH_MATCH,
 				MatchTermHelper.getMatchTermRuleEnglish(MatchAttributeRule.AMBIGUOUS_MATCH,
-						"Substance name English 10 mg oral tablet",
+						"Substance name English 10mg oral tablet",
 						expectedPharmaceutical));
 		// generic case-insensitive
 		Assert.assertEquals(MatchTermRule.GENERIC_CASE_INSENSITIVE_ENGLISH_MATCH,
 				MatchTermHelper.getMatchTermRuleEnglish(MatchAttributeRule.AMBIGUOUS_MATCH,
-						"substance name English 10 mg oral tablet",
+						"substance name English 10mg oral tablet",
 						expectedPharmaceutical));
 		// undesired component - substance
 		Assert.assertEquals(MatchTermRule.GENERIC_MISSING_ENGLISH_SUBSTANCE,

@@ -415,7 +415,8 @@ public class Match {
 		try (CSVWriter writer = new CSVWriter(new OutputStreamWriter(new FileOutputStream(fullFileName),
 						CharEncoding.UTF_8),
 				Check.getOutputFileContentSeparator(),
-				quoteChar)) {
+				quoteChar,
+				System.lineSeparator())) {
 			// header
 			writer.writeNext(REPORT_HEADER);
 			// content
@@ -465,7 +466,8 @@ public class Match {
 		try (CSVWriter writer = new CSVWriter(new OutputStreamWriter(new FileOutputStream(fullFileName),
 						CharEncoding.UTF_8),
 				Check.getOutputFileContentSeparator(),
-				quoteChar)) {
+				quoteChar,
+				System.lineSeparator())) {
 			// header
 			writer.writeNext(REPORT_HEADER);
 			// content

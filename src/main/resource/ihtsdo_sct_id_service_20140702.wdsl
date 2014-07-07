@@ -343,12 +343,12 @@
     <wsdl:part name="parameters" element="tns:createConceptIDListResponse">
     </wsdl:part>
   </wsdl:message>
-  <wsdl:message name="getSCTIDFault">
-    <wsdl:part name="parameters" element="tns:SCTIDFault">
-    </wsdl:part>
-  </wsdl:message>
   <wsdl:message name="getSCTIDResponse">
     <wsdl:part name="parameters" element="tns:SCTIDResponse">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="getSCTIDFault">
+    <wsdl:part name="parameters" element="tns:SCTIDFault">
     </wsdl:part>
   </wsdl:message>
   <wsdl:message name="createConceptIdsFault">
@@ -636,7 +636,7 @@
   </wsdl:binding>
   <wsdl:service name="id_generator">
     <wsdl:port name="id_generatorSOAP" binding="tns:id_generatorSOAP">
-      <soap:address location="http://uat-release.ihtsdotools.org/axis2/services/id_generator/"/>
+      <soap:address location="http://192.168.210.36:50002/axis2/services/id_generator/"/>
     </wsdl:port>
   </wsdl:service>
 </wsdl:definitions>

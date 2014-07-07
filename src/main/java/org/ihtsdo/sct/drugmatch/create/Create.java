@@ -5,6 +5,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
+import java.rmi.RemoteException;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -170,40 +171,70 @@ public class Create {
 	}
 
 	/**
-	 * Create and export; fully specified name and preferred term.
+	 * Create and export; English fully specified name, preferred term and national preferred term.
 	 * @param conceptId
-	 * @param preferredTerm
-	 * @param languageCode
+	 * @param englishPreferredTerm
+	 * @param nationalPreferredTerm
+	 * @return English Fully Specified Name
+	 * @throws CreateSCTIDFaultException
+	 * @throws DrugMatchConfigurationException
+	 * @throws IOException
+	 */
+	private String createEnglishAndNationalDescriptions(final String conceptId,
+			final String englishPreferredTerm,
+			final String nationalPreferredTerm) throws CreateSCTIDFaultException, DrugMatchConfigurationException, IOException {
+		// national preferred term
+		String descriptionId = getExtensionDescriptionId(ComponentIdHelper.getNamespaceId(conceptId),
+				nationalPreferredTerm,
+				DrugMatchProperties.getNationalLanguageCode());
+		exportDescription(conceptId,
+				descriptionId,
+				nationalPreferredTerm,
+				DrugMatchProperties.getNationalLanguageCode(),
+				ReleaseFormat2.DESCRIPTION_TYPE_PREFERRED_TERM_ID);
+		exportPreferredToLanguageReferenceSet(descriptionId);
+		// English terms
+		return 	createEnglishDescriptions(conceptId,
+						englishPreferredTerm);
+	}
+
+	/**
+	 * Create and export; English fully specified name and preferred term.
+	 * @param conceptId
+	 * @param englishPreferredTerm
 	 * @return Fully Specified Name
 	 * @throws CreateSCTIDFaultException
 	 * @throws DrugMatchConfigurationException
 	 * @throws IOException
 	 */
-	private String createDescriptions(final String conceptId,
-			final String preferredTerm,
-			final String languageCode) throws CreateSCTIDFaultException, DrugMatchConfigurationException, IOException {
-		// Preferred term
+	private String createEnglishDescriptions(final String conceptId,
+			final String englishPreferredTerm) throws CreateSCTIDFaultException, DrugMatchConfigurationException, IOException {
+		// English preferred term
 		// including namespace ID and language code to avoid undesired collision
 		String namespaceId = ComponentIdHelper.getNamespaceId(conceptId);
-		String preferredTermId = this.idService.getExtensionDescriptionId(getUUID(namespaceId + preferredTerm + languageCode));
+		String descriptionId = getExtensionDescriptionId(namespaceId,
+				englishPreferredTerm,
+				ReleaseFormat2.LANGUAGE_EN_CODE);
 		exportDescription(conceptId,
-				preferredTermId,
-				preferredTerm,
-				languageCode,
+				descriptionId,
+				englishPreferredTerm,
+				ReleaseFormat2.LANGUAGE_EN_CODE,
 				ReleaseFormat2.DESCRIPTION_TYPE_PREFERRED_TERM_ID);
-		exportPreferredToLanguageReferenceSet(preferredTermId);
-		// Fully specified name
-		String fullySpecifiedName = preferredTerm + " (product)";
+		exportPreferredToLanguageReferenceSet(descriptionId);
+		// English fully specified name
+		String englishFullySpecifiedName = englishPreferredTerm + " (product)";
 		// A FSN is unambiguous and unique, source: Robert Turnbull (20140603, rtu@ihtsdo.org)
 		// For a given namespace ID & language code combination (dleh, 20140604)
-		String fullySpecifiedNameId = this.idService.getExtensionDescriptionId(getUUID(namespaceId + fullySpecifiedName + languageCode));
+		descriptionId = getExtensionDescriptionId(namespaceId,
+				englishFullySpecifiedName,
+				ReleaseFormat2.LANGUAGE_EN_CODE);
 		exportDescription(conceptId,
-				fullySpecifiedNameId,
-				fullySpecifiedName,
-				languageCode,
+				descriptionId,
+				englishFullySpecifiedName,
+				ReleaseFormat2.LANGUAGE_EN_CODE,
 				ReleaseFormat2.DESCRIPTION_TYPE_FULLY_SPECIFIED_NAME_ID);
-		exportPreferredToLanguageReferenceSet(fullySpecifiedNameId);
-		return fullySpecifiedName;
+		exportPreferredToLanguageReferenceSet(descriptionId);
+		return englishFullySpecifiedName;
 	}
 
 	/**
@@ -221,9 +252,9 @@ public class Create {
 		}
 		String conceptId = createConcept(pharmaceutical.getGenericUUID().toString(),
 				this.placeHolderConceptId);
-		String fullySpecifiedName = createDescriptions(conceptId,
+		String fullySpecifiedName = createEnglishAndNationalDescriptions(conceptId,
 				pharmaceutical.getEnglishTerm(),
-				ReleaseFormat2.LANGUAGE_EN_CODE);
+				pharmaceutical.getNationalTerm());
 		createParentRelationship(conceptId,
 				this.placeHolderConceptId);
 		createAttributeRelationships(conceptId,
@@ -247,9 +278,9 @@ public class Create {
 			final String parentId) throws CreateConceptIdsFaultException, CreateSCTIDFaultException, DrugMatchConfigurationException, IOException {
 		String conceptId = createConcept(pharmaceutical.getPharmaceuticalUUID().toString(),
 				parentId);
-		String fullySpecifiedName = createDescriptions(conceptId,
-				pharmaceutical.getPharmaceuticalTerm(),
-				DrugMatchProperties.getNationalLanguageCode());
+		String fullySpecifiedName = createEnglishAndNationalDescriptions(conceptId,
+				pharmaceutical.getEnglishPharmaceuticalTerm(),
+				pharmaceutical.getNationalPharmaceuticalTerm());
 		createParentRelationship(conceptId,
 				parentId);
 		createAttributeRelationships(conceptId,
@@ -286,9 +317,8 @@ public class Create {
 	private void createPlaceHolderConcept() throws CreateConceptIdsFaultException, CreateSCTIDFaultException, DrugMatchConfigurationException, IOException {
 		this.placeHolderConceptId = createConcept("9c261e4c-d25d-4dc2-84c2-a3227d5ffb1e", // UUID v4 (random, pulled from http://www.famkruithof.net/uuid/uuidgen )
 				ReleaseFormat2.CONCEPT_PHARMACEUTICAL_OR_BIOLOGIC_PRODUCT_ID);
-		String fullySpecifiedName = createDescriptions(this.placeHolderConceptId,
-				"DrugMatch placeholder",
-				ReleaseFormat2.LANGUAGE_EN_CODE);
+		String fullySpecifiedName = createEnglishDescriptions(this.placeHolderConceptId,
+				"DrugMatch placeholder");
 		// create parent relation
 		createParentRelationship(this.placeHolderConceptId,
 				ReleaseFormat2.CONCEPT_PHARMACEUTICAL_OR_BIOLOGIC_PRODUCT_ID);
@@ -384,7 +414,8 @@ public class Create {
 								!addHeader), // append
 						CharEncoding.UTF_8),
 				ReleaseFormat2.FILE_CONTENT_SEPARATOR_CHARACTER,
-				CSVWriter.NO_QUOTE_CHARACTER)) {
+				CSVWriter.NO_QUOTE_CHARACTER,
+				ReleaseFormat2.NEW_LINE)) {
 			// header
 			if (addHeader) {
 				writer.writeNext(new String[] {
@@ -432,7 +463,8 @@ public class Create {
 								!addHeader), // append
 						CharEncoding.UTF_8),
 				ReleaseFormat2.FILE_CONTENT_SEPARATOR_CHARACTER,
-				CSVWriter.NO_QUOTE_CHARACTER)) {
+				CSVWriter.NO_QUOTE_CHARACTER,
+				ReleaseFormat2.NEW_LINE)) {
 			// header
 			if (addHeader) {
 				writer.writeNext(new String[] {
@@ -479,7 +511,8 @@ public class Create {
 			try (CSVWriter writer = new CSVWriter(new OutputStreamWriter(new FileOutputStream(fullFileName),
 					CharEncoding.UTF_8),
 					Check.getOutputFileContentSeparator(),
-					quoteChar)) {
+					quoteChar,
+					System.lineSeparator())) {
 				// header
 				writer.writeNext(new String[] {
 						"Drug ID",
@@ -517,7 +550,8 @@ public class Create {
 								!addHeader), // append
 						CharEncoding.UTF_8),
 				ReleaseFormat2.FILE_CONTENT_SEPARATOR_CHARACTER,
-				CSVWriter.NO_QUOTE_CHARACTER)) {
+				CSVWriter.NO_QUOTE_CHARACTER,
+				ReleaseFormat2.NEW_LINE)) {
 			// header
 			if (addHeader) {
 				writer.writeNext(new String[] {
@@ -567,7 +601,8 @@ public class Create {
 								!addHeader), // append
 						CharEncoding.UTF_8),
 				ReleaseFormat2.FILE_CONTENT_SEPARATOR_CHARACTER,
-				CSVWriter.NO_QUOTE_CHARACTER)) {
+				CSVWriter.NO_QUOTE_CHARACTER,
+				ReleaseFormat2.NEW_LINE)) {
 			// header
 			if (addHeader) {
 				writer.writeNext(new String[] {
@@ -625,7 +660,8 @@ public class Create {
 								!addHeader), // append
 						CharEncoding.UTF_8),
 				ReleaseFormat2.FILE_CONTENT_SEPARATOR_CHARACTER,
-				CSVWriter.NO_QUOTE_CHARACTER)) {
+				CSVWriter.NO_QUOTE_CHARACTER,
+				ReleaseFormat2.NEW_LINE)) {
 			// header
 			if (addHeader) {
 				writer.writeNext(new String[] {
@@ -677,7 +713,8 @@ public class Create {
 								!addHeader), // append
 						CharEncoding.UTF_8),
 				ReleaseFormat2.FILE_CONTENT_SEPARATOR_CHARACTER,
-				CSVWriter.NO_QUOTE_CHARACTER)) {
+				CSVWriter.NO_QUOTE_CHARACTER,
+				ReleaseFormat2.NEW_LINE)) {
 			// header
 			if (addHeader) {
 				writer.writeNext(new String[] {
@@ -783,6 +820,26 @@ public class Create {
 	}
 
 	/**
+	 * @param namespaceId
+	 * @param term
+	 * @param languageCode
+	 * @return Extension Description ID
+	 * @throws CreateSCTIDFaultException
+	 * @throws DrugMatchConfigurationException
+	 * @throws RemoteException
+	 * @throws UnsupportedEncodingException
+	 */
+	private String getExtensionDescriptionId(String namespaceId,
+			String term,
+			String languageCode) throws CreateSCTIDFaultException, DrugMatchConfigurationException, RemoteException, UnsupportedEncodingException {
+		return this.idService.getExtensionDescriptionId(
+				getUUID(new StringBuilder(namespaceId)
+						.append(term)
+						.append(languageCode)
+						.toString()));
+	}
+
+	/**
 	 * Export concept to "Create" report.
 	 * @param conceptId
 	 * @param fullySpecifiedName
@@ -802,7 +859,8 @@ public class Create {
 								!addHeader), // append
 						CharEncoding.UTF_8),
 				Check.getOutputFileContentSeparator(),
-				quoteChar)) {
+				quoteChar,
+				System.lineSeparator())) {
 			// header
 			if (addHeader) {
 				writer.writeNext(REPORT_HEADER);
@@ -837,7 +895,8 @@ public class Create {
 								!addHeader), // append
 						CharEncoding.UTF_8),
 				Check.getOutputFileContentSeparator(),
-				quoteChar)) {
+				quoteChar,
+				System.lineSeparator())) {
 			// header
 			if (addHeader) {
 				writer.writeNext(REPORT_HEADER);
