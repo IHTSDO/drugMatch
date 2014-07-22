@@ -34,11 +34,11 @@ The behavior of the tool is controlled via:
 		</tr>
 	</thead>
 	<tbody>
-	<tr>
-		<td>input.file</td>
-		<td>path</td>
-		<td>Input file</td>
-	</tr>
+		<tr>
+			<td>input.file</td>
+			<td>path</td>
+			<td>Input file</td>
+		</tr>
 		<tr>
 			<td>input.file.include_first_line</td>
 			<td>boolean</td>
@@ -77,6 +77,20 @@ The behavior of the tool is controlled via:
 			</td>
 		</tr>
 		<tr>
+			<td>sct.extension.language_reference_set_id</td>
+			<td></td>
+			<td>
+				<a href="http://www.snomed.org/tig?t=trg2rfs_spec_lang">Language Reference Set ID</a>
+			</td>
+		</tr>
+		<tr>
+			<td>sct.extension.quantity_reference_set_id</td>
+			<td></td>
+			<td>
+				<a href="http://www.snomed.org/tig?t=trg2rfs_spec_overview">Quantity Reference Set ID</a>
+			</td>
+		</tr>
+		<tr>
 			<td>sct.release_id</td>
 			<td>Ex. '201401031'</td>
 			<td>SCT release ID</td>
@@ -110,6 +124,31 @@ The behavior of the tool is controlled via:
 			<td>strict_mode</td>
 			<td>boolean</td>
 			<td>If set to true, "Check" warnings will be treated as errors (default: false)</td>
+		</tr>
+		<tr>
+			<td>sct.attribute_id.has_active_ingredient</td>
+			<td>Concept ID</td>
+			<td>"Match" attribute, Has active ingredient</td>
+		</tr>
+		<tr>
+			<td>sct.attribute_id.has_dose_form</td>
+			<td>Concept ID</td>
+			<td>"Match" attribute, Has dose form</td>
+		</tr>
+		<tr>
+			<td>sct.constraint_id.dose_form</td>
+			<td>Concept ID</td>
+			<td>"Check" dose form top point limitation</td>
+		</tr>
+		<tr>
+			<td>sct.constraint_id.substance</td>
+			<td>Concept ID</td>
+			<td>"Check" substance top point limitation</td>
+		</tr>
+		<tr>
+			<td>sct.constraint_id.unit</td>
+			<td>Concept ID</td>
+			<td>"Check" unit top point limitation</td>
 		</tr>
 	</tbody>
 </table>

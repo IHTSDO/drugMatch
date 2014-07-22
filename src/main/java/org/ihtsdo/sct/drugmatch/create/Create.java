@@ -59,7 +59,8 @@ public class Create {
 	private String fileNameConcept,
 		fileNameDescription,
 		fileNameQuantityReferenceSet,
-		fileNameReferenceSetLanguage,
+		fileNameReferenceSetLanguageEnglish,
+		fileNameReferenceSetLanguageNational,
 		fileNameRelationship,
 		fileNameReportCoreConcept,
 		fileNameReportExtensionConcept,
@@ -79,6 +80,15 @@ public class Create {
 	private static final String[] REPORT_HEADER = new String[] {
 				"SCT Concept ID",
 				"SCT Fully Specified Name"
+		},
+		LANGUAGE_REFSET_HEADER = new String[] {
+				"id",
+				"effectiveTime",
+				"active",
+				"moduleId",
+				"refsetId",
+				"referencedComponentId",
+				"acceptabilityId"
 		};
 
 	/**
@@ -130,9 +140,7 @@ public class Create {
 		if (destinationId == null) {
 			destinationId = (pharmaceutical.doseForm.nameEnglish == null) ? null : this.doseForm2Id.get(pharmaceutical.doseForm.nameEnglish);
 		}
-		String relationshipId = this.idService.getExtensionRelationshipId(getUUID(sourceId + typeId + destinationId));
-		exportRelationship(relationshipId,
-				sourceId,
+		String relationshipId = exportRelationship(sourceId,
 				String.valueOf(destinationId),
 				typeId);
 		// active ingredient
@@ -142,14 +150,12 @@ public class Create {
 			if (destinationId == null) {
 				destinationId = (component.substance.nameEnglish == null) ? null : this.substance2Id.get(component.substance.nameEnglish);
 			}
-			relationshipId = this.idService.getExtensionRelationshipId(getUUID(sourceId + typeId + destinationId));
-			exportRelationship(relationshipId,
-					sourceId,
+			relationshipId = exportRelationship(sourceId,
 					String.valueOf(destinationId),
 					typeId);
 			exportRelationshipToQuantityReferenceSet(relationshipId,
 					this.unit2Id.get(component.unit), // Concept ID
-					component.strength);
+					Component.getStrengthEnglish(component.strength)); // enforce English numeric notation (source: Rory Davidson (20140721, rda@ihtsdo.org))
 		}
 	}
 
@@ -192,7 +198,7 @@ public class Create {
 				nationalPreferredTerm,
 				DrugMatchProperties.getNationalLanguageCode(),
 				ReleaseFormat2.DESCRIPTION_TYPE_PREFERRED_TERM_ID);
-		exportPreferredToLanguageReferenceSet(descriptionId);
+		exportPreferredNationalToLanguageReferenceSet(descriptionId);
 		// English terms
 		return 	createEnglishDescriptions(conceptId,
 						englishPreferredTerm);
@@ -220,7 +226,7 @@ public class Create {
 				englishPreferredTerm,
 				ReleaseFormat2.LANGUAGE_EN_CODE,
 				ReleaseFormat2.DESCRIPTION_TYPE_PREFERRED_TERM_ID);
-		exportPreferredToLanguageReferenceSet(descriptionId);
+		exportPreferredEnglishToLanguageReferenceSet(descriptionId);
 		// English fully specified name
 		String englishFullySpecifiedName = englishPreferredTerm + " (product)";
 		// A FSN is unambiguous and unique, source: Robert Turnbull (20140603, rtu@ihtsdo.org)
@@ -233,7 +239,7 @@ public class Create {
 				englishFullySpecifiedName,
 				ReleaseFormat2.LANGUAGE_EN_CODE,
 				ReleaseFormat2.DESCRIPTION_TYPE_FULLY_SPECIFIED_NAME_ID);
-		exportPreferredToLanguageReferenceSet(descriptionId);
+		exportPreferredEnglishToLanguageReferenceSet(descriptionId);
 		return englishFullySpecifiedName;
 	}
 
@@ -300,9 +306,7 @@ public class Create {
 	 */
 	private void createParentRelationship(final String sourceId,
 			final String destinationId) throws CreateSCTIDFaultException, DrugMatchConfigurationException, IOException {
-		String relationshipId = this.idService.getExtensionRelationshipId(getUUID(sourceId + ReleaseFormat2.RELATIONSHIP_TYPE_IS_A_ID + destinationId));
-		exportRelationship(relationshipId,
-				sourceId,
+		exportRelationship(sourceId,
 				destinationId,
 				ReleaseFormat2.RELATIONSHIP_TYPE_IS_A_ID);
 	}
@@ -535,18 +539,18 @@ public class Create {
 	}
 
 	/**
-	 * Export description to SNOMED CT Release Format 2 Language Reference Set.
+	 * Export English description to SNOMED CT Release Format 2 Language Reference Set.
 	 * @param descriptionId
 	 * @throws DrugMatchConfigurationException
 	 * @throws IOException
 	 */
-	private void exportPreferredToLanguageReferenceSet(final String descriptionId) throws DrugMatchConfigurationException, IOException {
+	private void exportPreferredEnglishToLanguageReferenceSet(final String descriptionId) throws DrugMatchConfigurationException, IOException {
 		boolean addHeader = false;
-		if (this.fileNameReferenceSetLanguage == null) {
-			this.fileNameReferenceSetLanguage = DrugMatchProperties.getReferenceSetLanguageDirectory().getPath() + File.separator + "der2_cRefset_Language_DrugMatch_" + this.isoNow + ".txt";
+		if (this.fileNameReferenceSetLanguageEnglish == null) {
+			this.fileNameReferenceSetLanguageEnglish = DrugMatchProperties.getReferenceSetLanguageDirectory().getPath() + File.separator + "der2_cRefset_Language_DrugMatch_" + ReleaseFormat2.LANGUAGE_EN_CODE + "_" + this.isoNow + ".txt";
 			addHeader = true;
 		}
-		try (CSVWriter writer = new CSVWriter(new OutputStreamWriter(new FileOutputStream(this.fileNameReferenceSetLanguage,
+		try (CSVWriter writer = new CSVWriter(new OutputStreamWriter(new FileOutputStream(this.fileNameReferenceSetLanguageEnglish,
 								!addHeader), // append
 						CharEncoding.UTF_8),
 				ReleaseFormat2.FILE_CONTENT_SEPARATOR_CHARACTER,
@@ -554,16 +558,8 @@ public class Create {
 				ReleaseFormat2.NEW_LINE)) {
 			// header
 			if (addHeader) {
-				writer.writeNext(new String[] {
-						"id",
-						"effectiveTime",
-						"active",
-						"moduleId",
-						"refsetId",
-						"referencedComponentId",
-						"acceptabilityId"
-				});
-				log.info("Created {}", this.fileNameReferenceSetLanguage);
+				writer.writeNext(LANGUAGE_REFSET_HEADER);
+				log.info("Created {}", this.fileNameReferenceSetLanguageEnglish);
 			}
 			// content
 			writer.writeNext(new String[] {
@@ -571,7 +567,44 @@ public class Create {
 					this.effectiveTime,
 					ReleaseFormat2.STATUS_ACTIVE_ID,
 					DrugMatchProperties.getModuleId(),
-					ReleaseFormat2.REFERENCE_SET_LANGUAGE_ID,
+					ReleaseFormat2.REFERENCE_SET_LANGUAGE_US_ENGLISH_ID,
+					descriptionId,
+					ReleaseFormat2.META_DATA_ACCEPTABILITY_PREFERRED_ID
+			});
+			writer.flush();
+		}
+	}
+
+	/**
+	 * Export national description to SNOMED CT Release Format 2 Language Reference Set.
+	 * @param descriptionId
+	 * @throws DrugMatchConfigurationException
+	 * @throws IOException
+	 */
+	private void exportPreferredNationalToLanguageReferenceSet(final String descriptionId) throws DrugMatchConfigurationException, IOException {
+		boolean addHeader = false;
+		if (this.fileNameReferenceSetLanguageNational == null) {
+			this.fileNameReferenceSetLanguageNational = DrugMatchProperties.getReferenceSetLanguageDirectory().getPath() + File.separator + "der2_cRefset_Language_DrugMatch_" + DrugMatchProperties.getNationalLanguageCode() + "_" + this.isoNow + ".txt";
+			addHeader = true;
+		}
+		try (CSVWriter writer = new CSVWriter(new OutputStreamWriter(new FileOutputStream(this.fileNameReferenceSetLanguageNational,
+								!addHeader), // append
+						CharEncoding.UTF_8),
+				ReleaseFormat2.FILE_CONTENT_SEPARATOR_CHARACTER,
+				CSVWriter.NO_QUOTE_CHARACTER,
+				ReleaseFormat2.NEW_LINE)) {
+			// header
+			if (addHeader) {
+				writer.writeNext(LANGUAGE_REFSET_HEADER);
+				log.info("Created {}", this.fileNameReferenceSetLanguageNational);
+			}
+			// content
+			writer.writeNext(new String[] {
+					UUID.randomUUID().toString(), // UUID v4 as defined by Robert Turnbull (20140603, rtu@ihtsdo.org)
+					this.effectiveTime,
+					ReleaseFormat2.STATUS_ACTIVE_ID,
+					DrugMatchProperties.getModuleId(),
+					DrugMatchProperties.getLanguageReferenceSetId(),
 					descriptionId,
 					ReleaseFormat2.META_DATA_ACCEPTABILITY_PREFERRED_ID
 			});
@@ -581,17 +614,23 @@ public class Create {
 
 	/**
 	 * Export relationship to SNOMED CT Release Format 2.
-	 * @param relationshipId
 	 * @param sourceId
 	 * @param destinationId
 	 * @param typeId
+	 * @return Relationship ID
+	 * @throws CreateSCTIDFaultException
 	 * @throws DrugMatchConfigurationException
 	 * @throws IOException
 	 */
-	private void exportRelationship(final String relationshipId,
-			final String sourceId,
+	private String exportRelationship(final String sourceId,
 			final String destinationId,
-			final String typeId) throws DrugMatchConfigurationException, IOException {
+			final String typeId) throws CreateSCTIDFaultException, DrugMatchConfigurationException, IOException {
+		String relationshipId = getExtensionRelationshipId(sourceId,
+				destinationId,
+				ReleaseFormat2.RELATIONSHIP_GROUP_NONE,
+				typeId,
+				ReleaseFormat2.RELATIONSHIP_CHARACTERISTIC_TYPE_DEFINING_ID,
+				ReleaseFormat2.RELATIONSHIP_MODIFIER_ID);
 		boolean addHeader = false;
 		if (this.fileNameRelationship == null) {
 			this.fileNameRelationship = DrugMatchProperties.getTerminologyDirectory().getPath() + File.separator + "sct2_Relationship_DrugMatch_" + this.isoNow + ".txt";
@@ -634,10 +673,11 @@ public class Create {
 			});
 			writer.flush();
 		}
-		exportStatedRelationship(relationshipId,
-				sourceId,
+		// currently all relationships created are defining ( http://ihtsdo.org/fileadmin/user_upload/doc/en_us/tig.html?t=trg2main_stated_relationships )
+		exportStatedRelationship(sourceId,
 				destinationId,
 				typeId);
+		return relationshipId;
 	}
 
 	/**
@@ -693,17 +733,16 @@ public class Create {
 
 	/**
 	 * Export relationship to SNOMED CT Release Format 2.
-	 * @param relationshipId
 	 * @param sourceId
 	 * @param destinationId
 	 * @param typeId
+	 * @throws CreateSCTIDFaultException
 	 * @throws DrugMatchConfigurationException
 	 * @throws IOException
 	 */
-	private void exportStatedRelationship(final String relationshipId,
-			final String sourceId,
+	private void exportStatedRelationship(final String sourceId,
 			final String destinationId,
-			final String typeId) throws DrugMatchConfigurationException, IOException {
+			final String typeId) throws CreateSCTIDFaultException, DrugMatchConfigurationException, IOException {
 		boolean addHeader = false;
 		if (this.fileNameStatedRelationship == null) {
 			this.fileNameStatedRelationship = DrugMatchProperties.getTerminologyDirectory().getPath() + File.separator + "sct2_StatedRelationship_DrugMatch_" + this.isoNow + ".txt";
@@ -733,7 +772,12 @@ public class Create {
 			}
 			// content
 			writer.writeNext(new String[] {
-					relationshipId,
+					getExtensionRelationshipId(sourceId,
+							destinationId,
+							ReleaseFormat2.RELATIONSHIP_GROUP_NONE,
+							typeId,
+							ReleaseFormat2.RELATIONSHIP_CHARACTERISTIC_TYPE_STATED_ID,
+							ReleaseFormat2.RELATIONSHIP_MODIFIER_ID),
 					this.effectiveTime,
 					ReleaseFormat2.STATUS_ACTIVE_ID,
 					DrugMatchProperties.getModuleId(),
@@ -836,6 +880,35 @@ public class Create {
 				getUUID(new StringBuilder(namespaceId)
 						.append(term)
 						.append(languageCode)
+						.toString()));
+	}
+
+	/**
+	 * @param sourceId
+	 * @param destinationId
+	 * @param relationshipGroup
+	 * @param typeId
+	 * @param characteristicTypeId
+	 * @param modifierId
+	 * @return Extension Relationship ID
+	 * @throws CreateSCTIDFaultException
+	 * @throws DrugMatchConfigurationException
+	 * @throws RemoteException
+	 * @throws UnsupportedEncodingException
+	 */
+	private String getExtensionRelationshipId(String sourceId,
+			String destinationId,
+			String relationshipGroup,
+			String typeId,
+			String characteristicTypeId,
+			String modifierId) throws CreateSCTIDFaultException, DrugMatchConfigurationException, RemoteException, UnsupportedEncodingException {
+		return this.idService.getExtensionRelationshipId(
+				getUUID(new StringBuilder(sourceId)
+						.append(destinationId)
+						.append(relationshipGroup)
+						.append(typeId)
+						.append(characteristicTypeId)
+						.append(modifierId)
 						.toString()));
 	}
 

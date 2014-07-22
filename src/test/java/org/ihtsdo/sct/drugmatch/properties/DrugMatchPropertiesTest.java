@@ -68,6 +68,12 @@ public class DrugMatchPropertiesTest extends SystemEnvironmentTestSetup {
 	}
 
 	@Test
+	public final void getLanguageReferenceSetId() throws DrugMatchConfigurationException {
+		Assert.assertEquals("554461000005103",
+				DrugMatchProperties.getLanguageReferenceSetId());
+	}
+
+	@Test
 	public final void getMappingDirectory() throws DrugMatchConfigurationException {
 		Assert.assertEquals("./result/mapping",
 				DrugMatchProperties.getMappingDirectory().toString());
@@ -129,7 +135,7 @@ public class DrugMatchPropertiesTest extends SystemEnvironmentTestSetup {
 
 	@Test
 	public final void getSctIdService() throws DrugMatchConfigurationException {
-		Assert.assertEquals("http://95.85.42.232:8080/axis2/services/id_generator",
+		Assert.assertEquals("https://www.ihtsdo.org/service/sct/id_generator",
 				DrugMatchProperties.getSctIdService());
 	}
 

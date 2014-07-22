@@ -38,11 +38,12 @@ public final class DrugMatchProperties {
 
 			EXTENSION_LANGUAGE_CODE = "sct.extension.language_code",
 			EXTENSION_NAMESPACE_ID = "sct.extension.namespace_id",
+			EXTENSION_LANGUAGE_REFERENCE_SET_ID = "sct.extension.language_reference_set_id",
+			EXTENSION_QUANTITY_REFERENCE_SET_ID = "sct.extension.quantity_reference_set_id",
 
 			OUTPUT_DIR = "output.dir",
 
 			SCT_ID_SERVICE = "sct.id.service",
-			SCT_QUANTITY_REFERENCE_SET_ID = "sct.quantity_reference_set_id",
 			SCT_RELEASE_ID = "sct.release_id",
 
 			SETTING_FILE = "setting.file",
@@ -90,7 +91,7 @@ public final class DrugMatchProperties {
 
 	/**
 	 * @param propertyName
-	 * @return trimmed value, or null if missing or empty
+	 * @return trimmed value, or null if missing or empty.
 	 * @throws DrugMatchConfigurationException
 	 */
 	private static String getStringProperty(final String propertyName) throws DrugMatchConfigurationException {
@@ -118,6 +119,10 @@ public final class DrugMatchProperties {
 		return Boolean.parseBoolean(getStringProperty(GENERIC_REPORT));
 	}
 
+	/**
+	 * @return "Has active ingredient" concept ID.
+	 * @throws DrugMatchConfigurationException
+	 */
 	public static Long getAttributeIdHasActiveIngredient() throws DrugMatchConfigurationException {
 		String id = getStringProperty(ATTRIBUTE_ID_HAS_ACTIVE_INGREDIENT);
 		try {
@@ -130,6 +135,10 @@ public final class DrugMatchProperties {
 		return null;
 	}
 
+	/**
+	 * @return "Has dose form" concept ID.
+	 * @throws DrugMatchConfigurationException
+	 */
 	public static Long getAttributeIdHasDoseForm() throws DrugMatchConfigurationException {
 		String id = getStringProperty(ATTRIBUTE_ID_HAS_DOSE_FORM);
 		try {
@@ -142,6 +151,10 @@ public final class DrugMatchProperties {
 		return null;
 	}
 
+	/**
+	 * @return ex. "Type of drug preparation" concept ID.
+	 * @throws DrugMatchConfigurationException
+	 */
 	public static Long getConstraintIdDoseForm() throws DrugMatchConfigurationException {
 		String id = getStringProperty(CONSTRAINT_ID_DOSE_FORM);
 		try {
@@ -154,6 +167,10 @@ public final class DrugMatchProperties {
 		return null;
 	}
 
+	/**
+	 * @return ex. "Substance" concept ID.
+	 * @throws DrugMatchConfigurationException
+	 */
 	public static Long getConstraintIdSubstance() throws DrugMatchConfigurationException {
 		String id = getStringProperty(CONSTRAINT_ID_SUBSTANCE);
 		try {
@@ -166,6 +183,10 @@ public final class DrugMatchProperties {
 		return null;
 	}
 
+	/**
+	 * @return ex. "Unit" concept ID.
+	 * @throws DrugMatchConfigurationException
+	 */
 	public static Long getConstraintIdUnit() throws DrugMatchConfigurationException {
 		String id = getStringProperty(CONSTRAINT_ID_UNIT);
 		try {
@@ -186,12 +207,20 @@ public final class DrugMatchProperties {
 		return getStringProperty(FILE_CONTENT_SEPARATOR_CHARACTER);
 	}
 
+	public static String getInputFileIncludeFirstLine() throws DrugMatchConfigurationException {
+		return getStringProperty(INPUT_FILE_INCLUDE_FIRST_LINE);
+	}
+
 	public static String getInputFilePath() throws DrugMatchConfigurationException {
 		return getStringProperty(INPUT_FILE);
 	}
 
-	public static String getInputFileIncludeFirstLine() throws DrugMatchConfigurationException {
-		return getStringProperty(INPUT_FILE_INCLUDE_FIRST_LINE);
+	/**
+	 * @return national Language Reference Set ID.
+	 * @throws DrugMatchConfigurationException
+	 */
+	public static String getLanguageReferenceSetId() throws DrugMatchConfigurationException {
+		return getStringProperty(EXTENSION_LANGUAGE_REFERENCE_SET_ID);
 	}
 
 	public static File getMappingDirectory() throws DrugMatchConfigurationException {
@@ -208,6 +237,10 @@ public final class DrugMatchProperties {
 		return mappingDir;
 	}
 
+	/**
+	 * @return national module ID.
+	 * @throws DrugMatchConfigurationException
+	 */
 	public static String getModuleId() throws DrugMatchConfigurationException {
 		return getStringProperty(MODULE_ID);
 	}
@@ -248,7 +281,7 @@ public final class DrugMatchProperties {
 	}
 
 	public static String getQuantityReferenceSetId() throws DrugMatchConfigurationException {
-		return getStringProperty(SCT_QUANTITY_REFERENCE_SET_ID);
+		return getStringProperty(EXTENSION_QUANTITY_REFERENCE_SET_ID);
 	}
 
 	public static File getReferenceSetContentDirectory() throws DrugMatchConfigurationException {
