@@ -136,24 +136,34 @@ public class Create {
 			final Pharmaceutical pharmaceutical) throws CreateSCTIDFaultException, DrugMatchConfigurationException, IOException {
 		// dose form
 		String typeId = String.valueOf(DrugMatchProperties.getAttributeIdHasDoseForm());
-		Long destinationId = (pharmaceutical.doseForm.nameNational == null) ? null : this.doseForm2Id.get(pharmaceutical.doseForm.nameNational);
-		if (destinationId == null) {
-			destinationId = (pharmaceutical.doseForm.nameEnglish == null) ? null : this.doseForm2Id.get(pharmaceutical.doseForm.nameEnglish);
+		Long destinationIdNumber = (pharmaceutical.doseForm.nameNational == null) ? null : this.doseForm2Id.get(pharmaceutical.doseForm.nameNational);
+		if (destinationIdNumber == null) {
+			destinationIdNumber = (pharmaceutical.doseForm.nameEnglish == null) ? null : this.doseForm2Id.get(pharmaceutical.doseForm.nameEnglish);
 		}
-		String relationshipId = exportRelationship(sourceId,
-				String.valueOf(destinationId),
+		String destinationId = String.valueOf(destinationIdNumber);
+		exportRelationship(sourceId,
+				destinationId,
+				typeId);
+		// http://ihtsdo.org/fileadmin/user_upload/doc/en_us/tig.html?t=trg2main_stated_relationships
+		String statedRelationshipId = exportStatedRelationship(sourceId,
+				destinationId,
 				typeId);
 		// active ingredient
 		typeId = String.valueOf(DrugMatchProperties.getAttributeIdHasActiveIngredient());
 		for (Component component : pharmaceutical.components) {
-			destinationId = (component.substance.nameNational == null) ? null : this.substance2Id.get(component.substance.nameNational);
-			if (destinationId == null) {
-				destinationId = (component.substance.nameEnglish == null) ? null : this.substance2Id.get(component.substance.nameEnglish);
+			destinationIdNumber = (component.substance.nameNational == null) ? null : this.substance2Id.get(component.substance.nameNational);
+			if (destinationIdNumber == null) {
+				destinationIdNumber = (component.substance.nameEnglish == null) ? null : this.substance2Id.get(component.substance.nameEnglish);
 			}
-			relationshipId = exportRelationship(sourceId,
-					String.valueOf(destinationId),
+			destinationId = String.valueOf(destinationIdNumber);
+			exportRelationship(sourceId,
+					destinationId,
 					typeId);
-			exportRelationshipToQuantityReferenceSet(relationshipId,
+			// http://ihtsdo.org/fileadmin/user_upload/doc/en_us/tig.html?t=trg2main_stated_relationships
+			statedRelationshipId = exportStatedRelationship(sourceId,
+					destinationId,
+					typeId);
+			exportRelationshipToQuantityReferenceSet(statedRelationshipId,
 					this.unit2Id.get(component.unit), // Concept ID
 					Component.getStrengthEnglish(component.strength)); // enforce English numeric notation (source: Rory Davidson (20140721, rda@ihtsdo.org))
 		}
@@ -307,6 +317,10 @@ public class Create {
 	private void createParentRelationship(final String sourceId,
 			final String destinationId) throws CreateSCTIDFaultException, DrugMatchConfigurationException, IOException {
 		exportRelationship(sourceId,
+				destinationId,
+				ReleaseFormat2.RELATIONSHIP_TYPE_IS_A_ID);
+		// http://ihtsdo.org/fileadmin/user_upload/doc/en_us/tig.html?t=trg2main_stated_relationships
+		exportStatedRelationship(sourceId,
 				destinationId,
 				ReleaseFormat2.RELATIONSHIP_TYPE_IS_A_ID);
 	}
@@ -673,15 +687,11 @@ public class Create {
 			});
 			writer.flush();
 		}
-		// currently all relationships created are defining ( http://ihtsdo.org/fileadmin/user_upload/doc/en_us/tig.html?t=trg2main_stated_relationships )
-		exportStatedRelationship(sourceId,
-				destinationId,
-				typeId);
 		return relationshipId;
 	}
 
 	/**
-	 * Export description to SNOMED CT Release Format 2 Quantity Reference Set.
+	 * Export relationship to SNOMED CT Release Format 2 Quantity Reference Set.
 	 * @param referencedComponentId
 	 * @param conceptId
 	 * @param number
@@ -736,13 +746,20 @@ public class Create {
 	 * @param sourceId
 	 * @param destinationId
 	 * @param typeId
+	 * @return Relationship ID
 	 * @throws CreateSCTIDFaultException
 	 * @throws DrugMatchConfigurationException
 	 * @throws IOException
 	 */
-	private void exportStatedRelationship(final String sourceId,
+	private String exportStatedRelationship(final String sourceId,
 			final String destinationId,
 			final String typeId) throws CreateSCTIDFaultException, DrugMatchConfigurationException, IOException {
+		String relationshipId = getExtensionRelationshipId(sourceId,
+				destinationId,
+				ReleaseFormat2.RELATIONSHIP_GROUP_NONE,
+				typeId,
+				ReleaseFormat2.RELATIONSHIP_CHARACTERISTIC_TYPE_STATED_ID,
+				ReleaseFormat2.RELATIONSHIP_MODIFIER_ID);
 		boolean addHeader = false;
 		if (this.fileNameStatedRelationship == null) {
 			this.fileNameStatedRelationship = DrugMatchProperties.getTerminologyDirectory().getPath() + File.separator + "sct2_StatedRelationship_DrugMatch_" + this.isoNow + ".txt";
@@ -772,12 +789,7 @@ public class Create {
 			}
 			// content
 			writer.writeNext(new String[] {
-					getExtensionRelationshipId(sourceId,
-							destinationId,
-							ReleaseFormat2.RELATIONSHIP_GROUP_NONE,
-							typeId,
-							ReleaseFormat2.RELATIONSHIP_CHARACTERISTIC_TYPE_STATED_ID,
-							ReleaseFormat2.RELATIONSHIP_MODIFIER_ID),
+					relationshipId,
 					this.effectiveTime,
 					ReleaseFormat2.STATUS_ACTIVE_ID,
 					DrugMatchProperties.getModuleId(),
@@ -790,6 +802,7 @@ public class Create {
 			});
 			writer.flush();
 		}
+		return relationshipId;
 	}
 
 	/**
