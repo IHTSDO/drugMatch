@@ -34,7 +34,6 @@ import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
-import org.ihtsdo.sct.drugmatch.constant.rf1.DescriptionType;
 import org.ihtsdo.sct.drugmatch.exception.DrugMatchConfigurationException;
 import org.ihtsdo.sct.drugmatch.properties.DrugMatchProperties;
 import org.ihtsdo.sct.drugmatch.verification.service.VerificationService;
@@ -68,6 +67,11 @@ public class VerificationServiceImpl implements VerificationService {
 	private static final TypeReference<List<LogEntry>> LOG_ENTRY_TYPE_REFERENCE = new TypeReference<List<LogEntry>>() {
 		// empty on purpose.
 	};
+
+	/**
+	 * Empty, cause: unable to filter on namespace as the SNOMED CT international release now contains 1+ namespace.
+	 */
+	private static final Set<String> SNOMED_CT_NAMESPACE_IDS = Collections.<String>emptySet();
 
 	private final CredentialsProvider credentialsProvider;
 
@@ -280,9 +284,9 @@ public class VerificationServiceImpl implements VerificationService {
 	/**
 	 * {@inheritDoc}
 	 */
-	public final List<ConceptSearchResultDescriptor> getDoseFormExactEnglishPreferredTermMatch(final String query) throws DrugMatchConfigurationException, IOException {
-		return getDoseFormExactPreferredTermMatch(
-				Collections.<String>emptySet(), // unable to filter on namespace as the SNOMED CT international release now contains 1+ namespace.
+	public final List<ConceptSearchResultDescriptor> getDoseFormExactEnglishTermMatch(final String query) throws DrugMatchConfigurationException, IOException {
+		return getDoseFormExactTermMatch(
+				SNOMED_CT_NAMESPACE_IDS,
 				query,
 				this.englishLocaleCodes);
 	}
@@ -290,28 +294,34 @@ public class VerificationServiceImpl implements VerificationService {
 	/**
 	 * {@inheritDoc}
 	 */
-	public final List<ConceptSearchResultDescriptor> getDoseFormExactNationalPreferredTermMatch(final String query) throws DrugMatchConfigurationException, IOException {
+	public final List<ConceptSearchResultDescriptor> getDoseFormExactNationalTermMatch(final String query) throws DrugMatchConfigurationException, IOException {
 		String nationalNamespaceId = DrugMatchProperties.getNationalNamespaceId();
 		if (nationalNamespaceId == null) {
 			throw new DrugMatchConfigurationException("Unable to proceed, cause: '" + DrugMatchProperties.EXTENSION_NAMESPACE_ID + "' isn't set!");
 		} // else
-		return getDoseFormExactPreferredTermMatch(
+		return getDoseFormExactTermMatch(
 				Collections.singleton(nationalNamespaceId),
 				query,
 				Collections.<String>emptySet());
 	}
 
 	/**
-	 * {@inheritDoc}
+	 * Common logic for dose form exact term match
+	 * @param namespaceIds
+	 * @param query
+	 * @param localeCodes
+	 * @return {@link List}({@link ConceptSearchResultDescriptor})
+	 * @throws DrugMatchConfigurationException
+	 * @throws IOException
 	 */
-	public final List<ConceptSearchResultDescriptor> getDoseFormExactPreferredTermMatch(final Set<String> namespaceIds,
+	private List<ConceptSearchResultDescriptor> getDoseFormExactTermMatch(final Set<String> namespaceIds,
 			final String query,
 			final Set<String> localeCodes) throws DrugMatchConfigurationException, IOException {
 		Long constraintId = DrugMatchProperties.getConstraintIdDoseForm();
 		if (constraintId == null) {
 			throw new DrugMatchConfigurationException("Unable to proceed, cause: '" + DrugMatchProperties.CONSTRAINT_ID_DOSE_FORM + "' isn't set!");
 		} // else
-		return getExactPreferredTermMatch(
+		return getExactTermMatch(
 				namespaceIds,
 				Collections.singleton(constraintId),
 				localeCodes,
@@ -319,26 +329,16 @@ public class VerificationServiceImpl implements VerificationService {
 	}
 
 	/**
-	 * {@inheritDoc}
+	 * Common logic for exact term match
+	 * @param namespaceIds
+	 * @param query
+	 * @param localeCodes
+	 * @return {@link List}({@link ConceptSearchResultDescriptor})
+	 * @throws DrugMatchConfigurationException
+	 * @throws IOException
 	 */
-	public final List<ConceptSearchResultDescriptor> getExactPreferredTermMatch(final Set<String> namespaceIds,
+	private List<ConceptSearchResultDescriptor> getExactTermMatch(final Set<String> namespaceIds,
 			final Set<Long> constraintIds,
-			final Set<String> localeCodes,
-			final String query) throws DrugMatchConfigurationException, IOException {
-		return getExactTermMatch(
-				constraintIds,
-				namespaceIds,
-				Collections.singleton(DescriptionType.PREFERRED_TERM),
-				localeCodes,
-				query);
-	}
-
-	/**
-	 * {@inheritDoc}
-	 */
-	public final List<ConceptSearchResultDescriptor> getExactTermMatch(final Set<Long> constraintIds,
-			final Set<String> namespaceIds,
-			final Set<DescriptionType> descriptionTypes,
 			final Set<String> localeCodes,
 			final String query) throws DrugMatchConfigurationException, IOException {
 		// construct path
@@ -353,11 +353,6 @@ public class VerificationServiceImpl implements VerificationService {
 		for (String namespaceId : namespaceIds) {
 			path.append("&namespaceId=")
 				.append(URLEncoder.encode(namespaceId, CharEncoding.UTF_8));
-		}
-		// description types
-		for (DescriptionType descriptionType : descriptionTypes) {
-			path.append("&descriptionTypeId=")
-				.append(descriptionType.getId());
 		}
 		// locale codes
 		for (String localeCode : localeCodes) {
@@ -414,9 +409,9 @@ public class VerificationServiceImpl implements VerificationService {
 	/**
 	 * {@inheritDoc}
 	 */
-	public final List<ConceptSearchResultDescriptor> getSubstanceExactEnglishPreferredTermMatch(final String query) throws DrugMatchConfigurationException, IOException {
-		return getSubstanceExactPreferredTermMatch(
-				Collections.<String>emptySet(), // unable to filter on namespace as the SNOMED CT international release now contains 1+ namespace.
+	public final List<ConceptSearchResultDescriptor> getSubstanceExactEnglishTermMatch(final String query) throws DrugMatchConfigurationException, IOException {
+		return getSubstanceExactTermMatch(
+				SNOMED_CT_NAMESPACE_IDS,
 				query,
 				this.englishLocaleCodes);
 	}
@@ -424,28 +419,34 @@ public class VerificationServiceImpl implements VerificationService {
 	/**
 	 * {@inheritDoc}
 	 */
-	public final List<ConceptSearchResultDescriptor> getSubstanceExactNationalPreferredTermMatch(final String query) throws DrugMatchConfigurationException, IOException {
+	public final List<ConceptSearchResultDescriptor> getSubstanceExactNationalTermMatch(final String query) throws DrugMatchConfigurationException, IOException {
 		String nationalNamespaceId = DrugMatchProperties.getNationalNamespaceId();
 		if (nationalNamespaceId == null) {
 			throw new DrugMatchConfigurationException("Unable to proceed, cause: '" + DrugMatchProperties.EXTENSION_NAMESPACE_ID + "' isn't set!");
 		} // else
-		return getSubstanceExactPreferredTermMatch(
+		return getSubstanceExactTermMatch(
 				Collections.singleton(nationalNamespaceId),
 				query,
 				Collections.<String>emptySet());
 	}
 
 	/**
-	 * {@inheritDoc}
+	 * Common logic for substance exact term match
+	 * @param namespaceIds
+	 * @param query
+	 * @param localeCodes
+	 * @return {@link List}({@link ConceptSearchResultDescriptor})
+	 * @throws DrugMatchConfigurationException
+	 * @throws IOException
 	 */
-	public final List<ConceptSearchResultDescriptor> getSubstanceExactPreferredTermMatch(final Set<String> namespaceIds,
+	private List<ConceptSearchResultDescriptor> getSubstanceExactTermMatch(final Set<String> namespaceIds,
 			final String query,
 			final Set<String> localeCodes) throws DrugMatchConfigurationException, IOException {
 		Long constraintId = DrugMatchProperties.getConstraintIdSubstance();
 		if (constraintId == null) {
 			throw new DrugMatchConfigurationException("Unable to proceed, cause: '" + DrugMatchProperties.CONSTRAINT_ID_SUBSTANCE + "' isn't set!");
 		} // else
-		return getExactPreferredTermMatch(
+		return getExactTermMatch(
 				namespaceIds,
 				Collections.singleton(constraintId),
 				localeCodes,
@@ -455,9 +456,9 @@ public class VerificationServiceImpl implements VerificationService {
 	/**
 	 * {@inheritDoc}
 	 */
-	public final List<ConceptSearchResultDescriptor> getUnitExactEnglishPreferredTermMatch(final String query) throws DrugMatchConfigurationException, IOException {
-		return getUnitExactPreferredTermMatch(
-				Collections.<String>emptySet(), // unable to filter on namespace as the SNOMED CT international release now contains 1+ namespace.
+	public final List<ConceptSearchResultDescriptor> getUnitExactEnglishTermMatch(final String query) throws DrugMatchConfigurationException, IOException {
+		return getUnitExactTermMatch(
+				SNOMED_CT_NAMESPACE_IDS,
 				query,
 				this.englishLocaleCodes);
 	}
@@ -465,28 +466,34 @@ public class VerificationServiceImpl implements VerificationService {
 	/**
 	 * {@inheritDoc}
 	 */
-	public final List<ConceptSearchResultDescriptor> getUnitExactNationalPreferredTermMatch(final String query) throws DrugMatchConfigurationException, IOException {
+	public final List<ConceptSearchResultDescriptor> getUnitExactNationalTermMatch(final String query) throws DrugMatchConfigurationException, IOException {
 		String nationalNamespaceId = DrugMatchProperties.getNationalNamespaceId();
 		if (nationalNamespaceId == null) {
 			throw new DrugMatchConfigurationException("Unable to proceed, cause: '" + DrugMatchProperties.EXTENSION_NAMESPACE_ID + "' isn't set!");
 		} // else
-		return getUnitExactPreferredTermMatch(
+		return getUnitExactTermMatch(
 				Collections.singleton(nationalNamespaceId),
 				query,
 				Collections.<String>emptySet());
 	}
 
 	/**
-	 * {@inheritDoc}
+	 * Common logic for unit exact term match
+	 * @param namespaceIds
+	 * @param query
+	 * @param localeCodes
+	 * @return {@link List}({@link ConceptSearchResultDescriptor})
+	 * @throws DrugMatchConfigurationException
+	 * @throws IOException
 	 */
-	public final List<ConceptSearchResultDescriptor> getUnitExactPreferredTermMatch(final Set<String> namespaceIds,
+	private List<ConceptSearchResultDescriptor> getUnitExactTermMatch(final Set<String> namespaceIds,
 			final String query,
 			final Set<String> localeCodes) throws DrugMatchConfigurationException, IOException {
 		Long constraintId = DrugMatchProperties.getConstraintIdUnit();
 		if (constraintId == null) {
 			throw new DrugMatchConfigurationException("Unable to proceed, cause: '" + DrugMatchProperties.CONSTRAINT_ID_UNIT + "' isn't set!");
 		} // else
-		return getExactPreferredTermMatch(
+		return getExactTermMatch(
 				namespaceIds,
 				Collections.singleton(constraintId),
 				localeCodes,

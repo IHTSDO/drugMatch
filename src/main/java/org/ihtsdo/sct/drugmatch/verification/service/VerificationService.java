@@ -42,56 +42,56 @@ public interface VerificationService {
 	String getConceptsByIdsUrl(Set<Long> conceptIds) throws DrugMatchConfigurationException;
 
 	/**
-	 * Retrieve exact preferred term (active & published) match(es) with English language code, under the {@link DrugMatchProperties#getConstraintIdDoseForm()} top point.
+	 * Retrieve exact term (active & published) match(es) with English language code, under the {@link DrugMatchProperties#getConstraintIdDoseForm()} top point.
 	 * @param query
 	 * @return {@link List}({@link ConceptSearchResultDescriptor})
 	 * @throws DrugMatchConfigurationException
 	 * @throws IOException
 	 */
-	List<ConceptSearchResultDescriptor> getDoseFormExactEnglishPreferredTermMatch(String query) throws DrugMatchConfigurationException, IOException;
+	List<ConceptSearchResultDescriptor> getDoseFormExactEnglishTermMatch(String query) throws DrugMatchConfigurationException, IOException;
 
 	/**
-	 * Retrieve exact preferred term (active & published) match(es) with national namespace ID, under the {@link DrugMatchProperties#getConstraintIdDoseForm()} top point.
+	 * Retrieve exact term (active & published) match(es) with national namespace ID, under the {@link DrugMatchProperties#getConstraintIdDoseForm()} top point.
 	 * @param query
 	 * @return {@link List}({@link ConceptSearchResultDescriptor})
 	 * @throws DrugMatchConfigurationException
 	 * @throws IOException
 	 */
-	List<ConceptSearchResultDescriptor> getDoseFormExactNationalPreferredTermMatch(String query) throws DrugMatchConfigurationException, IOException;
+	List<ConceptSearchResultDescriptor> getDoseFormExactNationalTermMatch(String query) throws DrugMatchConfigurationException, IOException;
 
 	/**
-	 * Retrieve exact preferred term (active & published) match(es) with English language code, under the {@link DrugMatchProperties#getConstraintIdSubstance()} top point.
+	 * Retrieve exact term (active & published) match(es) with English language code, under the {@link DrugMatchProperties#getConstraintIdSubstance()} top point.
 	 * @param query
 	 * @return {@link List}({@link ConceptSearchResultDescriptor})
 	 * @throws DrugMatchConfigurationException
 	 * @throws IOException
 	 */
-	List<ConceptSearchResultDescriptor> getSubstanceExactEnglishPreferredTermMatch(String query) throws DrugMatchConfigurationException, IOException;
+	List<ConceptSearchResultDescriptor> getSubstanceExactEnglishTermMatch(String query) throws DrugMatchConfigurationException, IOException;
 
 	/**
-	 * Retrieve exact preferred term (active & published) match(es) with national namespace ID, under the {@link DrugMatchProperties#getConstraintIdSubstance()} top point.
+	 * Retrieve exact term (active & published) match(es) with national namespace ID, under the {@link DrugMatchProperties#getConstraintIdSubstance()} top point.
 	 * @param query
 	 * @return {@link List}({@link ConceptSearchResultDescriptor})
 	 * @throws DrugMatchConfigurationException
 	 * @throws IOException
 	 */
-	List<ConceptSearchResultDescriptor> getSubstanceExactNationalPreferredTermMatch(String query) throws DrugMatchConfigurationException, IOException;
+	List<ConceptSearchResultDescriptor> getSubstanceExactNationalTermMatch(String query) throws DrugMatchConfigurationException, IOException;
 
 	/**
-	 * Retrieve exact preferred term (active & published) match(es) with English language code, under the {@link DrugMatchProperties#getConstraintIdUnit()} top point.
+	 * Retrieve exact term (active & published) match(es) with English language code, under the {@link DrugMatchProperties#getConstraintIdUnit()} top point.
 	 * @param query
 	 * @return {@link List}({@link ConceptSearchResultDescriptor})
 	 * @throws DrugMatchConfigurationException
 	 * @throws IOException
 	 */
-	List<ConceptSearchResultDescriptor> getUnitExactEnglishPreferredTermMatch(String query) throws DrugMatchConfigurationException, IOException;
+	List<ConceptSearchResultDescriptor> getUnitExactEnglishTermMatch(String query) throws DrugMatchConfigurationException, IOException;
 
 	/**
-	 * Retrieve exact preferred term (active & published) match(es) with national namespace ID, under the {@link DrugMatchProperties#getConstraintIdUnit()} top point.
+	 * Retrieve exact term (active & published) match(es) with national namespace ID, under the {@link DrugMatchProperties#getConstraintIdUnit()} top point.
 	 * @param query
 	 * @return {@link List}({@link ConceptSearchResultDescriptor})
 	 * @throws DrugMatchConfigurationException
 	 * @throws IOException
 	 */
-	List<ConceptSearchResultDescriptor> getUnitExactNationalPreferredTermMatch(String query) throws DrugMatchConfigurationException, IOException;
+	List<ConceptSearchResultDescriptor> getUnitExactNationalTermMatch(String query) throws DrugMatchConfigurationException, IOException;
 }

@@ -31,7 +31,7 @@ public class CheckValidationDanishImpl implements CheckValidation {
 
 	static {
 		Map<CheckRule, String> tmpResult = new HashMap<>();
-		tmpResult.put(CheckRule.CASE_INSENSITIVE_MATCH, "Case error");
+		tmpResult.put(CheckRule.CASE_INSENSITIVE_MATCH, "Case warning");
 //		tmpResult.put(CheckRule.CONCATENATION_MATCH, "Concatenation error"); excluded as no implementation details has been provided and the value provided is questionable (dleh, 20140603)
 		tmpResult.put(CheckRule.EXACT_MATCH, "Exact");
 //		tmpResult.put(CheckRule.INFLECTION_MATCH, "Inflection error"); excluded as no implementation details has been provided and the value provided is questionable (dleh, 20140603)

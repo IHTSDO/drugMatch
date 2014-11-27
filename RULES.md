@@ -2,15 +2,15 @@
 
 ##"Check"
 
-**AMBIGUOUS_MATCH** - more than one preferred term matched within the confined hierarchy.
+**AMBIGUOUS_MATCH** - more than one term matched within the confined hierarchy.
 
-**CASE_INSENSITIVE_MATCH** - one preferred term matched the input, except for the character case.
+**CASE_INSENSITIVE_MATCH** - one term matched the input, except for the character case.
 
 **COMPONENT_AND_TERM_MISMATCH** - an error has occurred.
 
-**EXACT_MATCH** - one preferred term matched the input exactly.
+**EXACT_MATCH** - one term matched the input exactly.
 
-**TRANSLATION_MISSING** - no national preferred term matched the input.
+**TRANSLATION_MISSING** - no national term matched the input.
 
 **UNCHECKED** - English input "Check" skipped, because the national input was successfully unambiguously matched.
 
@@ -40,45 +40,45 @@ The rule order below reflects the "strength" of match(es), only the rule with th
 
 The "Rule match" column might include a "AMBIGUOUS_" prefix when a rule was triggered more than once for the same input.
 
-**PHARMACEUTICAL_EXACT_NATIONAL_MATCH** - Trade name, component(s) & dose form all matched a national preferred term successfully.
+**PHARMACEUTICAL_EXACT_NATIONAL_MATCH** - Trade name, component(s) & dose form all matched a national term successfully.
 
-**PHARMACEUTICAL_CASE_INSENSITIVE_NATIONAL_MATCH** - Trade name, component(s) & dose form all matched a national preferred term successfully, except for the character case.
+**PHARMACEUTICAL_CASE_INSENSITIVE_NATIONAL_MATCH** - Trade name, component(s) & dose form all matched a national term successfully, except for the character case.
 
-**PHARMACEUTICAL_INCORRECT_COMPONENT_ORDER_NATIONAL** - Trade name, component(s) & dose form all matched a national preferred term successfully, except for the component order.
+**PHARMACEUTICAL_INCORRECT_COMPONENT_ORDER_NATIONAL** - Trade name, component(s) & dose form all matched a national term successfully, except for the component order.
 
-**GENERIC_EXACT_NATIONAL_MATCH** - Component(s) & dose form all matched a national preferred term successfully.
+**GENERIC_EXACT_NATIONAL_MATCH** - Component(s) & dose form all matched a national term successfully.
 
-**GENERIC_EXACT_ENGLISH_MATCH** - Component(s) & dose form all matched a English preferred term successfully.
+**GENERIC_EXACT_ENGLISH_MATCH** - Component(s) & dose form all matched a English term successfully.
 
-**GENERIC_CASE_INSENSITIVE_NATIONAL_MATCH** - Component(s) & dose form all matched a national preferred term successfully, except for the character case.
+**GENERIC_CASE_INSENSITIVE_NATIONAL_MATCH** - Component(s) & dose form all matched a national term successfully, except for the character case.
 
-**GENERIC_CASE_INSENSITIVE_ENGLISH_MATCH** - Component(s) & dose form all matched a English preferred term successfully, except for the character case.
+**GENERIC_CASE_INSENSITIVE_ENGLISH_MATCH** - Component(s) & dose form all matched a English term successfully, except for the character case.
 
-**GENERIC_INCORRECT_COMPONENT_ORDER_NATIONAL** - Component(s) & dose form all matched a national preferred term successfully, except for the component order.
+**GENERIC_INCORRECT_COMPONENT_ORDER_NATIONAL** - Component(s) & dose form all matched a national term successfully, except for the component order.
 
-**PHARMACEUTICAL_PARTIAL_TRADE_NAME_NATIONAL** - Component(s) & dose form all matched a national preferred term successfully, except for only a partial match on the input trade name.
+**PHARMACEUTICAL_PARTIAL_TRADE_NAME_NATIONAL** - Component(s) & dose form all matched a national term successfully, except for only a partial match on the input trade name.
 
-**GENERIC_PARTIAL_NATIONAL_DOSE_FORM** - Component(s) all matched a national preferred term successfully, except for only a partial match on the input dose form.
+**GENERIC_PARTIAL_NATIONAL_DOSE_FORM** - Component(s) all matched a national term successfully, except for only a partial match on the input dose form.
 
-**GENERIC_MISSING_NATIONAL_SUBSTANCE** - Substance was unmatched in a national preferred term.
+**GENERIC_MISSING_NATIONAL_SUBSTANCE** - Substance was unmatched in a national term.
 
-**GENERIC_MISSING_NATIONAL_DOSE_FORM** - Dose form was unmatched in a national preferred term.
+**GENERIC_MISSING_NATIONAL_DOSE_FORM** - Dose form was unmatched in a national term.
 
-**GENERIC_MISSING_NATIONAL_UNIT** - Unit was unmatched in a national preferred term.
+**GENERIC_MISSING_NATIONAL_UNIT** - Unit was unmatched in a national term.
 
-**GENERIC_MISSING_NATIONAL_STRENGTH** - Strength was unmatched in a national preferred term.
+**GENERIC_MISSING_NATIONAL_STRENGTH** - Strength was unmatched in a national term.
 
-**GENERIC_INCORRECT_COMPONENT_ORDER_ENGLISH** - Component(s) & dose form all matched a English preferred term successfully, except for the component order.
+**GENERIC_INCORRECT_COMPONENT_ORDER_ENGLISH** - Component(s) & dose form all matched a English term successfully, except for the component order.
 
-**GENERIC_PARTIAL_ENGLISH_DOSE_FORM** - Component(s) all matched a English preferred term successfully, except for only a partial match on the input dose form.
+**GENERIC_PARTIAL_ENGLISH_DOSE_FORM** - Component(s) all matched a English term successfully, except for only a partial match on the input dose form.
 
-**GENERIC_MISSING_ENGLISH_SUBSTANCE** - Substance was unmatched in a English preferred term.
+**GENERIC_MISSING_ENGLISH_SUBSTANCE** - Substance was unmatched in a English term.
 
-**GENERIC_MISSING_ENGLISH_DOSE_FORM** - Dose form was unmatched in a English preferred term.
+**GENERIC_MISSING_ENGLISH_DOSE_FORM** - Dose form was unmatched in a English term.
 
-**GENERIC_MISSING_ENGLISH_UNIT** - Unit was unmatched in a English preferred term.
+**GENERIC_MISSING_ENGLISH_UNIT** - Unit was unmatched in a English term.
 
-**GENERIC_MISSING_ENGLISH_STRENGTH** - Strength was unmatched in a English preferred term.
+**GENERIC_MISSING_ENGLISH_STRENGTH** - Strength was unmatched in a English term.
 
 **ZERO_TERM_MATCH** - zero concepts matched the input.
 

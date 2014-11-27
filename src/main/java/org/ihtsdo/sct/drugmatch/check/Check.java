@@ -114,12 +114,12 @@ public class Check {
 		List<ConceptSearchResultDescriptor> matches;
 		for (Map.Entry<DoseForm, Map<Locale, List<ConceptSearchResultDescriptor>>> entry : this.doseForms.entrySet()) {
 			// "check" national
-			matches = this.service.getDoseFormExactNationalPreferredTermMatch(entry.getKey().nameNational);
+			matches = this.service.getDoseFormExactNationalTermMatch(entry.getKey().nameNational);
 			entry.getValue().put(Locale.NATIONAL, matches);
 			if (matches.isEmpty()) {
 				// "check" English, when unmatched national
 				entry.getValue().put(Locale.ENGLISH,
-						this.service.getDoseFormExactEnglishPreferredTermMatch(entry.getKey().nameEnglish));
+						this.service.getDoseFormExactEnglishTermMatch(entry.getKey().nameEnglish));
 			}
 		}
 		log.info("Completed Dose form \"Check\"");
@@ -145,12 +145,12 @@ public class Check {
 		List<ConceptSearchResultDescriptor> matches;
 		for (Map.Entry<Substance, Map<Locale, List<ConceptSearchResultDescriptor>>> entry : this.substances.entrySet()) {
 			// "check" national
-			matches = this.service.getSubstanceExactNationalPreferredTermMatch(entry.getKey().nameNational);
+			matches = this.service.getSubstanceExactNationalTermMatch(entry.getKey().nameNational);
 			entry.getValue().put(Locale.NATIONAL, matches);
 			if (matches.isEmpty()) {
 				// "check" English, when unmatched national
 				entry.getValue().put(Locale.ENGLISH,
-						this.service.getSubstanceExactEnglishPreferredTermMatch(entry.getKey().nameEnglish));
+						this.service.getSubstanceExactEnglishTermMatch(entry.getKey().nameEnglish));
 			}
 		}
 		log.info("Completed Substance \"Check\"");
@@ -176,12 +176,12 @@ public class Check {
 		List<ConceptSearchResultDescriptor> matches;
 		for (Map.Entry<String, Map<Locale, List<ConceptSearchResultDescriptor>>> entry : this.units.entrySet()) {
 			// "check" national
-			matches = this.service.getUnitExactNationalPreferredTermMatch(entry.getKey());
+			matches = this.service.getUnitExactNationalTermMatch(entry.getKey());
 			entry.getValue().put(Locale.NATIONAL, matches);
 			if (matches.isEmpty()) {
 				// "check" English, when unmatched national
 				entry.getValue().put(Locale.ENGLISH,
-						this.service.getUnitExactEnglishPreferredTermMatch(entry.getKey()));
+						this.service.getUnitExactEnglishTermMatch(entry.getKey()));
 			}
 		}
 		log.info("Completed Unit \"Check\"");

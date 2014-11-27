@@ -15,7 +15,7 @@ public class CheckValidationDanishImplTest {
 		CheckValidation checkValidation = new CheckValidationDanishImpl();
 		Assert.assertEquals(CheckRule.AMBIGUOUS_MATCH.toString(),
 				checkValidation.getMessage(CheckRule.AMBIGUOUS_MATCH));
-		Assert.assertEquals("Case error",
+		Assert.assertEquals("Case warning",
 				checkValidation.getMessage(CheckRule.CASE_INSENSITIVE_MATCH));
 		Assert.assertEquals("Exact",
 				checkValidation.getMessage(CheckRule.EXACT_MATCH));
