@@ -90,7 +90,7 @@ public class VerificationServiceImpl implements VerificationService {
 		if (serviceUrl == null) {
 			throw new DrugMatchConfigurationException("Unable to proceed, cause: '" + DrugMatchProperties.VERIFICATION_SERVICE + "' isn't set!");
 		}
-		UrlValidator urlValidator = new UrlValidator(new String[] {"http", "https"});
+		UrlValidator urlValidator = new UrlValidator(new String[] {"http", "https"}, UrlValidator.ALLOW_LOCAL_URLS);
 		if (!urlValidator.isValid(serviceUrl.toLowerCase(Locale.ENGLISH))) {
 			throw new DrugMatchConfigurationException("Unable to proceed, cause: '" + DrugMatchProperties.VERIFICATION_SERVICE + "' isn't a valid HTTP/HTTPS URL!");
 		}
@@ -219,7 +219,7 @@ public class VerificationServiceImpl implements VerificationService {
 				log.debug("Executed request: {} status: {}", httpget.getRequestLine(), response.getStatusLine());
 				if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
 					ObjectMapper mapper = new ObjectMapper();
-					JsonNode results = mapper.readTree(response.getEntity().getContent()).get("conceptDetailDescriptor");
+					JsonNode results = mapper.readTree(response.getEntity().getContent()).get("record");
 					List<ConceptDescriptor> result = mapper.readValue(results.traverse(), CONCEPT_DESCRIPTOR_TYPE_REFERENCE);
 					EntityUtils.consume(response.getEntity());
 					if (result.size() != conceptIds.size()) {
@@ -237,7 +237,7 @@ public class VerificationServiceImpl implements VerificationService {
 						sb.append(line);
 					}
 					ObjectMapper mapper = new ObjectMapper();
-					JsonNode logEntries = mapper.readTree(sb.toString()).get("log");
+					JsonNode logEntries = mapper.readTree(sb.toString()).get("logEntry");
 					List<LogEntry> result = mapper.readValue(logEntries.traverse(), LOG_ENTRY_TYPE_REFERENCE);
 					EntityUtils.consume(response.getEntity());
 					if (result.isEmpty()) {
@@ -376,7 +376,7 @@ public class VerificationServiceImpl implements VerificationService {
 				log.debug("Executed request: {} status: {}", httpget.getRequestLine(), response.getStatusLine());
 				if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
 					ObjectMapper mapper = new ObjectMapper();
-					JsonNode results = mapper.readTree(response.getEntity().getContent()).get("result");
+					JsonNode results = mapper.readTree(response.getEntity().getContent()).get("record");
 					List<ConceptSearchResultDescriptor> result = mapper.readValue(results.traverse(), CONCEPT_SEARCH_RESULT_DESCRIPTOR_TYPE_REFERENCE);
 					EntityUtils.consume(response.getEntity());
 					log.debug("Request returned: {} result(s).",
@@ -391,7 +391,7 @@ public class VerificationServiceImpl implements VerificationService {
 						sb.append(line);
 					}
 					ObjectMapper mapper = new ObjectMapper();
-					JsonNode logEntries = mapper.readTree(sb.toString()).get("log");
+					JsonNode logEntries = mapper.readTree(sb.toString()).get("logEntry");
 					List<LogEntry> result = mapper.readValue(logEntries.traverse(), LOG_ENTRY_TYPE_REFERENCE);
 					EntityUtils.consume(response.getEntity());
 					if (result.isEmpty()) {

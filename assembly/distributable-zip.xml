@@ -36,6 +36,7 @@
 				<include>run.sh</include>
 			</includes>
 			<outputDirectory>/</outputDirectory>
+			<filtered>true</filtered>
 		</fileSet>
 		<fileSet>
 			<directory>${project.basedir}/src/test/resource/</directory>
@@ -47,7 +48,7 @@
 		<fileSet>
 			<directory>${project.build.directory}</directory>
 			<includes>
-				<include>${project.artifactId}*-dist.jar</include>
+				<include>${project.build.finalName}-dist.jar</include>
 			</includes>
 			<outputDirectory>/</outputDirectory>
 		</fileSet>

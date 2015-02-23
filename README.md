@@ -7,7 +7,7 @@ Tool preparing missing pharmaceutical content, both national and generic, for im
 ### Prerequisites
 * download ex. ihtsdo-sct-drugmatch-1.0-distributable.zip
 * [Java](http://www.java.com/) 7 (or compatible) runtime.
-* [HealthTerm™](http://www.healthterm.com/) v8.0 (or newer) access, with [SCT](http://www.ihtsdo.org/snomed-ct/) preloaded.
+* [HealthTerm™](http://www.healthterm.com/) v9.0 (or newer) access, with [SCT](http://www.ihtsdo.org/snomed-ct/) preloaded.
 
 ### Input file (UTF-8)
 
